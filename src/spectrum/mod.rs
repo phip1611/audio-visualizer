@@ -1,1 +1,1 @@
-//! Spectrum analysis. TODO. Code contributions are welcome.
+//! Spectrum visualization. TODO. Code contributions are welcome.
