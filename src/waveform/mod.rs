@@ -24,3 +24,4 @@ SOFTWARE.
 //! Waveform visualizations.
 
 pub mod staticc;
+pub mod dynamic;

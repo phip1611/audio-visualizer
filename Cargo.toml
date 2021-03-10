@@ -1,7 +1,7 @@
 [package]
 name = "audio-visualizer"
 description = "Simple audio visualization library which is especially useful for developers to visually check audio algorithms against the waveform."
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2018"
 keywords = ["audio", "visualizer", "waveform"]

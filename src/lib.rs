@@ -3,15 +3,17 @@
 //! So far the library is pretty simple but could be developed much further. Contributions are welcome.
 
 pub mod waveform;
+pub mod spectrum;
+
 mod test;
 
 /// Describes the interleavement of audio date if
 /// it is not mono but stereo.
 #[derive(Debug, Copy, Clone)]
 pub enum ChannelInterleavement {
-    /// Samples of one vector of audio date are alternating: left, right, left, right
+    /// Stereo samples of one vector of audio data are alternating: left, right, left, right
     LRLR,
-    /// Samples of one vector of audio date are ordered : left, left, ..., right, right
+    /// Stereo samples of one vector of audio data are ordered like: left, left, ..., right, right
     /// In this case the length must be a multiple of 2.
     LLRR,
 }
