@@ -1,3 +1,28 @@
+/*
+MIT License
+
+Copyright (c) 2021 Philipp Schuster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+//! Static waveform visualization which exports the waveform to a PNG file.
+
 use std::path::{PathBuf, Path};
 use std::fs::File;
 use std::io::BufWriter;
@@ -7,8 +32,8 @@ use crate::Channels;
 /// is mono, it creates one file. If the data is stereo,
 /// it creates two files (with left and right prefix)
 pub fn visualize(samples: &[i16], channels: Channels, directory: &str, filename: &str) {
-    let image_width = 1000;
-    let image_height = 500;
+    let image_width = 5000;
+    let image_height = 1000;
     if channels.is_stereo() {
         assert_eq!(0, samples.len() % 2, "If stereo is provided, the length of the audio data must be even!");
         let (left, right) = channels.stereo_interleavement().to_channel_data(samples);
