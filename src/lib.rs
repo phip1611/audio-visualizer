@@ -7,7 +7,7 @@ pub mod spectrum;
 
 mod test;
 
-/// Describes the interleavement of audio date if
+/// Describes the interleavement of audio data if
 /// it is not mono but stereo.
 #[derive(Debug, Copy, Clone)]
 pub enum ChannelInterleavement {
@@ -61,7 +61,7 @@ impl ChannelInterleavement {
     }
 }
 
-/// Describes the channels of
+/// Describes the number of channels of an audio stream.
 #[derive(Debug, Copy, Clone)]
 pub enum Channels {
     Mono,
