@@ -23,7 +23,7 @@ SOFTWARE.
 */
 //! Static waveform visualization which exports the waveform to a PNG file.
 
-use std::path::{PathBuf, Path};
+use std::path::PathBuf;
 use std::fs::File;
 use std::io::BufWriter;
 use crate::Channels;
@@ -54,7 +54,12 @@ pub fn visualize(samples: &[i16], channels: Channels, directory: &str, filename:
         let x = (sample_index as f64 * width_per_sample) as usize;
         // y offset; from top
         // image_height/2: there is our y-axis
-        let y = ((image_height/2) as f64 + *sample_value as f64 * height_per_max_amplitude) as usize;
+        let mut y = ((image_height/2) as f64 + *sample_value as f64 * height_per_max_amplitude) as usize;
+
+        // due to rounding it can happen that we get out of bounds
+        if y == image_height {
+            y = y - 1;
+        }
 
         image[y][x] = (0,0,0);
     }
@@ -87,8 +92,20 @@ mod tests {
     use crate::test::{TEST_SAMPLES_DIR, TEST_OUT_DIR};
     use crate::ChannelInterleavement;
 
+    /// This test works, if it doesn't panic.
     #[test]
-    fn test_visualize_1() {
+    fn test_no_out_of_bounds_panic() {
+        let audio_data = vec![i16::max_value(), i16::min_value()];
+        visualize(
+            &audio_data,
+            Channels::Mono,
+            TEST_OUT_DIR,
+            "sample_1_waveform-test-out-of-bounds-check.png"
+        );
+    }
+
+    #[test]
+    fn test_visualize_png_output() {
         let mut path = PathBuf::new();
         path.push(TEST_SAMPLES_DIR);
         path.push("sample_1.mp3");
