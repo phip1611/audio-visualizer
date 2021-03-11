@@ -24,5 +24,5 @@ SOFTWARE.
 //! Waveform analysis/visualization of static samples. Typo in the module is because
 //! 'static' is a reserved keyword in Rust.
 
+pub mod plotters_png_file;
 pub mod png_file;
-

@@ -23,22 +23,40 @@ SOFTWARE.
 */
 //! Static waveform visualization which exports the waveform to a PNG file.
 
-use std::path::PathBuf;
-use std::fs::File;
-use std::io::BufWriter;
+use crate::util::png::write_png_file_rgb_tuples;
 use crate::Channels;
+use std::path::PathBuf;
 
-/// Visualizes audio as a waveform in a png file. If the data
-/// is mono, it creates one file. If the data is stereo,
-/// it creates two files (with left and right prefix)
-pub fn visualize(samples: &[i16], channels: Channels, directory: &str, filename: &str) {
-    let image_width = 5000;
-    let image_height = 1000;
+/// Visualizes audio as a waveform in a png file in the most simple way.
+/// There are no axes. If the audio data is mono, it creates one file.
+/// If the data is stereo, it creates two files (with "left_" and "right_" prefix).
+pub fn waveform_static_png_visualize(
+    samples: &[i16],
+    channels: Channels,
+    directory: &str,
+    filename: &str,
+) {
+    let image_width = 500;
+    let image_height = 100;
     if channels.is_stereo() {
-        assert_eq!(0, samples.len() % 2, "If stereo is provided, the length of the audio data must be even!");
+        assert_eq!(
+            0,
+            samples.len() % 2,
+            "If stereo is provided, the length of the audio data must be even!"
+        );
         let (left, right) = channels.stereo_interleavement().to_channel_data(samples);
-        visualize(&left, Channels::Mono, directory, &format!("left_{}", filename));
-        visualize(&right, Channels::Mono, directory, &format!("right_{}", filename));
+        waveform_static_png_visualize(
+            &left,
+            Channels::Mono,
+            directory,
+            &format!("left_{}", filename),
+        );
+        waveform_static_png_visualize(
+            &right,
+            Channels::Mono,
+            directory,
+            &format!("right_{}", filename),
+        );
         return;
     }
 
@@ -48,59 +66,46 @@ pub fn visualize(samples: &[i16], channels: Channels, directory: &str, filename:
     let height_per_max_amplitude = image_height as f64 / 2_f64 / i16::max_value() as f64;
 
     // RGB image data
-    let mut image = vec![vec![(255,255,255); image_width]; image_height];
+    let mut image = vec![vec![(255, 255, 255); image_width]; image_height];
     for (sample_index, sample_value) in samples.into_iter().enumerate() {
         // x offset; from left
         let x = (sample_index as f64 * width_per_sample) as usize;
         // y offset; from top
         // image_height/2: there is our y-axis
-        let mut y = ((image_height/2) as f64 + *sample_value as f64 * height_per_max_amplitude) as usize;
+        let sample_value = *sample_value as f64 * -1.0; // y axis grows downwards
+        let mut y = ((image_height / 2) as f64 + sample_value * height_per_max_amplitude) as usize;
 
         // due to rounding it can happen that we get out of bounds
         if y == image_height {
             y = y - 1;
         }
 
-        image[y][x] = (0,0,0);
+        image[y][x] = (0, 0, 0);
     }
 
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);
-    let file = File::create(path).unwrap();
-    let ref mut w = BufWriter::new(file);
-
-    let mut encoder = png::Encoder::new(w, image_width as u32, image_height as u32); // Width is 2 pixels and height is 1.
-    encoder.set_color(png::ColorType::RGB);
-    encoder.set_depth(png::BitDepth::Eight);
-    let mut writer = encoder.write_header().unwrap();
-
-    // data must be RGBA sequence: RGBARGBARGBA...
-    let rgb_data = image.into_iter()
-        .flat_map(|row| row.into_iter())
-        .flat_map(|(r, g, b)| vec![r, g, b].into_iter())
-        .map(|v| v as u8)
-        .collect::<Vec<u8>>();
-
-    writer.write_image_data(&rgb_data).unwrap(); // Save
+    write_png_file_rgb_tuples(&path, &image);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use minimp3::{Decoder as Mp3Decoder, Frame as Mp3Frame, Error as Mp3Error};
-    use crate::test::{TEST_SAMPLES_DIR, TEST_OUT_DIR};
+    use crate::test_support::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
+    use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
+    use std::fs::File;
 
     /// This test works, if it doesn't panic.
     #[test]
     fn test_no_out_of_bounds_panic() {
         let audio_data = vec![i16::max_value(), i16::min_value()];
-        visualize(
+        waveform_static_png_visualize(
             &audio_data,
             Channels::Mono,
             TEST_OUT_DIR,
-            "sample_1_waveform-test-out-of-bounds-check.png"
+            "sample_1_waveform-test-out-of-bounds-check.png",
         );
     }
 
@@ -114,7 +119,10 @@ mod tests {
         let mut lrlr_mp3_samples = vec![];
         loop {
             match decoder.next_frame() {
-                Ok(Mp3Frame { data: samples_of_frame, .. }) => {
+                Ok(Mp3Frame {
+                    data: samples_of_frame,
+                    ..
+                }) => {
                     for sample in samples_of_frame {
                         lrlr_mp3_samples.push(sample);
                     }
@@ -124,13 +132,11 @@ mod tests {
             }
         }
 
-        visualize(
+        waveform_static_png_visualize(
             &lrlr_mp3_samples,
             Channels::Stereo(ChannelInterleavement::LRLR),
             TEST_OUT_DIR,
-            "sample_1_waveform.png"
+            "waveform_static_png_visualize_example.png",
         );
     }
 }
-
-

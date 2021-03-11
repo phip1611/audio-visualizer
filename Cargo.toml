@@ -1,10 +1,10 @@
 [package]
 name = "audio-visualizer"
-description = "Simple audio visualization library which is especially useful for developers to visually check audio algorithms against the waveform."
-version = "0.1.4"
+description = "Simple audio visualization library which is especially useful for developers to visually check audio algorithms against the waveform or spectrum."
+version = "0.2.0"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2018"
-keywords = ["audio", "visualizer", "waveform"]
+keywords = ["audio", "visualizer", "waveform", "spectrum"]
 categories = ["multimedia::audio", "development-tools"]
 readme = "README.md"
 license = "MIT"
@@ -15,3 +15,8 @@ documentation = "https://docs.rs/audio-visualizer/"
 [dependencies]
 png = "0.16.8"
 minimp3 = "0.5.1"
+plotters = "0.3.0"
+
+# otherwise FFT and other code is too slow
+[profile.dev]
+opt-level = 1

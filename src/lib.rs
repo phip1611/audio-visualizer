@@ -1,11 +1,13 @@
-
 //! Library mainly useful for audio developers to quickly check algorithms that operate on audio/waveform.
 //! So far the library is pretty simple but could be developed much further. Contributions are welcome.
 
-pub mod waveform;
 pub mod spectrum;
+pub mod waveform;
 
-mod test;
+// public for examples
+pub mod util;
+// public for examples
+pub mod test_support;
 
 /// Describes the interleavement of audio data if
 /// it is not mono but stereo.
@@ -22,13 +24,13 @@ impl ChannelInterleavement {
     pub fn is_lrlr(&self) -> bool {
         match self {
             ChannelInterleavement::LRLR => true,
-            _ => false
+            _ => false,
         }
     }
     pub fn is_lllrr(&self) -> bool {
         match self {
             ChannelInterleavement::LLRR => true,
-            _ => false
+            _ => false,
         }
     }
     /// Transforms the interleaved data into two vectors.
@@ -49,10 +51,10 @@ impl ChannelInterleavement {
             }
         } else {
             let n = interleaved_data.len();
-            for sample_i in 0..n/2 {
+            for sample_i in 0..n / 2 {
                 left_data.push(interleaved_data[sample_i]);
             }
-            for sample_i in n/2..n {
+            for sample_i in n / 2..n {
                 right_data.push(interleaved_data[sample_i]);
             }
         }
@@ -65,32 +67,31 @@ impl ChannelInterleavement {
 #[derive(Debug, Copy, Clone)]
 pub enum Channels {
     Mono,
-    Stereo(ChannelInterleavement)
+    Stereo(ChannelInterleavement),
 }
 
 impl Channels {
     pub fn is_mono(&self) -> bool {
         match self {
             Channels::Mono => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn is_stereo(&self) -> bool {
         match self {
             Channels::Stereo(_) => true,
-            _ => false
+            _ => false,
         }
     }
 
     pub fn stereo_interleavement(&self) -> ChannelInterleavement {
         match self {
             Channels::Stereo(interleavmement) => interleavmement.clone(),
-            _ => panic!("Not stereo")
+            _ => panic!("Not stereo"),
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
