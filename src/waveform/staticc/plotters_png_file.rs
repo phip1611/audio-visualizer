@@ -71,7 +71,7 @@ pub fn waveform_static_plotters_png_visualize(
         }
     }
 
-    let root = BitMapBackend::new(&path, ((samples.len() / 20) as u32, 1000)).into_drawing_area();
+    let root = BitMapBackend::new(&path, ((samples.len() / 5) as u32, 1000)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let mut chart = ChartBuilder::on(&root)
         .caption("y=music(t)", ("sans-serif", 50).into_font())

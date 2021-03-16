@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 pub fn spectrum_static_plotters_png_visualize(
-    frequency_spectrum: &BTreeMap<usize, f32>,
+    frequency_spectrum: &BTreeMap<u32, f32>,
     directory: &str,
     filename: &str,
     normalize_to_median: bool,
@@ -53,12 +53,12 @@ pub fn spectrum_static_plotters_png_visualize(
     path.push(filename);
 
     let mut width = frequency_spectrum.len() as u32;
-    if width < 300 {
-        width = 300;
+    if width < 700 {
+        width = 700;
     }
 
-    let mut height = 1000;
-    if width < 1000 {
+    let mut height = 700;
+    if width < 700 {
         height = (width as f32/0.8) as u32;
     }
 
@@ -67,8 +67,8 @@ pub fn spectrum_static_plotters_png_visualize(
     let mut chart = ChartBuilder::on(&root)
         .caption("y=f magnitudes of sample", ("sans-serif", 20).into_font())
         .margin(5)
-        .x_label_area_size(30)
-        .y_label_area_size(30)
+        .x_label_area_size(60)
+        .y_label_area_size(60)
         .build_cartesian_2d(
             0.0..(max_frequency as f32), /*.log10()*/
             0.0..max as f32,

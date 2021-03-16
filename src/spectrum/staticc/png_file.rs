@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 pub fn spectrum_static_png_visualize(
-    frequency_spectrum: &BTreeMap<usize, f32>,
+    frequency_spectrum: &BTreeMap<u32, f32>,
     directory: &str,
     filename: &str,
     highlighted_frequencies: &[f32],
