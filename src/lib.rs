@@ -1,5 +1,6 @@
-//! Library mainly useful for audio developers to quickly check algorithms that operate on audio/waveform.
-//! So far the library is pretty simple but could be developed much further. Contributions are welcome.
+//! Super basic and simple audio visualization library which is especially useful for developers to
+//! visually check audio samples, e.g. by waveform or spectrum. (So far) this library is not
+//! capable of doing nice visualizations for end users. Contributions are welcome.
 
 pub mod spectrum;
 pub mod waveform;

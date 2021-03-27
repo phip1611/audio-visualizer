@@ -1,7 +1,6 @@
 //! Static spectrum analysis: print to PNG file.
 
 use plotters::prelude::*;
-use std::cmp::Ordering;
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
@@ -9,41 +8,21 @@ pub fn spectrum_static_plotters_png_visualize(
     frequency_spectrum: &BTreeMap<u32, f32>,
     directory: &str,
     filename: &str,
-    normalize_to_median: bool,
 ) {
-    // optionally normalize to median
-    let median = if normalize_to_median {
-        // find median and normalize to median
-        let mut sorted_magnitudes = frequency_spectrum
-            .values()
-            .map(|x| *x)
-            .collect::<Vec<f32>>();
-        sorted_magnitudes.sort_by(|a, b| a.partial_cmp(b).unwrap_or(Ordering::Equal));
-        sorted_magnitudes[frequency_spectrum.len() / 2]
-    } else {
-        0.0
-    };
-
-    let mut normalized_frequency_spectrum = BTreeMap::new();
-    for (f, mag) in frequency_spectrum {
-        if *mag < 0.0 {
-            normalized_frequency_spectrum.insert(*f, 0.0);
-        } else {
-            normalized_frequency_spectrum.insert(*f, *mag - median);
-        }
-    }
+    // assert no NAN
+    assert!(!frequency_spectrum.iter().any(|(_, f)| f.is_nan()), "There are NAN-values in the spectrum!");
 
     // find maximum for graphics scaling
     let mut max = 0.0;
-    for (_fr, mag) in &normalized_frequency_spectrum {
+    for (_fr, mag) in frequency_spectrum {
         if *mag > max {
             max = *mag;
         }
     }
 
-    let max_frequency = *normalized_frequency_spectrum
+    let max_frequency = *frequency_spectrum
         .iter()
-        .skip(normalized_frequency_spectrum.len() - 2)
+        .skip(frequency_spectrum.len() - 2)
         .last()
         .unwrap()
         .0;
@@ -80,7 +59,7 @@ pub fn spectrum_static_plotters_png_visualize(
     chart
         .draw_series(LineSeries::new(
             // (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-            normalized_frequency_spectrum
+            frequency_spectrum
                 .iter()
                 .into_iter()
                 .map(|(frequency, magnitude)| ((*frequency as f32) /*.log10()*/, *magnitude)),
@@ -102,6 +81,7 @@ pub fn spectrum_static_plotters_png_visualize(
 mod tests {
     use super::*;
     use crate::test_support::TEST_OUT_DIR;
+    use std::f32::NAN;
 
     #[test]
     fn test_visualize_sine_waves_spectrum_plotters() {
@@ -123,12 +103,24 @@ mod tests {
         spectrum.insert(120, 0.0);
         spectrum.insert(130, 0.0);
 
-        // Do FFT + get spectrum
         spectrum_static_plotters_png_visualize(
             &spectrum,
             TEST_OUT_DIR,
             "spectrum_60hz_peak_plotters_visualization.png",
-            false,
+        );
+    }
+
+    #[allow(non_snake_case)]
+    #[test]
+    #[should_panic]
+    fn test_panic_on_NAN() {
+        let mut spectrum = BTreeMap::new();
+        spectrum.insert(0, NAN);
+
+        spectrum_static_plotters_png_visualize(
+            &spectrum,
+            TEST_OUT_DIR,
+            "spectrum_60hz_peak_plotters_visualization_NAN.png",
         );
     }
 }
