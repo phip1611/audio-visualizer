@@ -36,8 +36,8 @@ pub fn waveform_static_png_visualize(
     directory: &str,
     filename: &str,
 ) {
-    let image_width = 500;
-    let image_height = 100;
+    let image_width = 1500;
+    let image_height = 200;
     if channels.is_stereo() {
         assert_eq!(
             0,
