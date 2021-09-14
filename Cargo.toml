@@ -5,7 +5,7 @@ Super basic and simple audio visualization library which is especially useful fo
 samples, e.g. by waveform or spectrum. (So far) this library is not capable of doing nice visualizations
 for end users.
 """
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2018"
 keywords = ["audio", "visualizer", "waveform", "spectrum"]
@@ -17,9 +17,9 @@ repository = "https://github.com/phip1611/audio-visualizer"
 documentation = "https://docs.rs/audio-visualizer/"
 
 [dependencies]
-png = "0.16.8"
+png = "0.17.1"
 minimp3 = "0.5.1"
-plotters = "0.3.0"
+plotters = "0.3.1"
 
 # otherwise FFT and other code is too slow
 [profile.dev]

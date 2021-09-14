@@ -100,7 +100,7 @@ mod tests {
     /// This test works, if it doesn't panic.
     #[test]
     fn test_no_out_of_bounds_panic() {
-        let audio_data = vec![i16::max_value(), i16::min_value()];
+        let audio_data = vec![i16::MAX, i16::MIN];
         waveform_static_png_visualize(
             &audio_data,
             Channels::Mono,
