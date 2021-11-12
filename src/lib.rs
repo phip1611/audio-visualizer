@@ -8,6 +8,7 @@ pub mod waveform;
 // public for examples
 pub mod util;
 // public for examples
+pub mod dynamic;
 pub mod test_support;
 
 /// Describes the interleavement of audio data if
