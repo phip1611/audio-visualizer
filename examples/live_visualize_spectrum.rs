@@ -77,7 +77,7 @@ fn main() {
 
     let in_dev = select_input_dev();
     open_window_connect_audio(
-        "Test",
+        "Live Spectrum View",
         None,
         None,
         // 0.0..22050.0_f64.log(100.0),
