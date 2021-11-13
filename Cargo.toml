@@ -15,6 +15,10 @@ license = "MIT"
 homepage = "https://github.com/phip1611/audio-visualizer"
 repository = "https://github.com/phip1611/audio-visualizer"
 documentation = "https://docs.rs/audio-visualizer/"
+exclude = [
+    "res",
+    "test"
+]
 
 [dependencies]
 png = "0.17"
@@ -25,7 +29,6 @@ plotters-bitmap = "0.3"
 ringbuffer = "0.8"
 cpal = "0.13"
 minifb = "0.19" # window
-plotters-bitmap = "0.3"
 
 [dev-dependencies]
 lowpass-filter = "0.2"

@@ -1,67 +1,47 @@
 # Rust library: audio-visualizer
 
-So far this library is really simple and mainly targets developers that develop audio algorithms. With this library
-you can easily display your current audio data/waveform/spectrum and check if everything looks good. Functionality 
-is really limited and follow the KISS (keep it simple, stupid) principle. Code contributions are very welcome!
-
-#### Example of a waveform
-![Example visualization of a waveform](png_waveform_example.png "Example visualization of a waveform")
-
-#### Example of a spectrum
-![Example visualization of a spectrum (0-140hz)](plotters_spectrum_example.png "Example visualization of a spectrum (0-140hz)")
+So far this library is rather basic and targets developers that develop audio algorithms. With this library you can
+easily display your current audio data/waveform/spectrum and check if everything looks good/as expected.
 
 ## Covered Functionality
-- **waveform**
-  - **dynamic**: live visualization to audio input stream
-    - [ ] TODO: code contributions are welcome
-  - **static**: visualization of a single, static sample 
+
+- **dynamic real-time audio**
+    - [x] functionality to record audio and connect it with a GUI window
+    - [x] side-by-side (top/btm) view of original waveform and custom view (e.g. spectrum or lowpass filter)
+
+- **static waveform**
     - [x] very basic PNG output
     - [x] PNG output with basic axes/labels using https://crates.io/crates/plotters
-    - [ ] TODO fancy static output
-    
-- **spectrum**
-    - **dynamic**: visualization of a single, static sample
-        - [ ] TODO: code contributions are welcome
-    - **static**: visualization of a single, static sample
-      - [x] very basic PNG output with the option to highlight specific frequencies
-      - [x] PNG output with basic axes/labels using https://crates.io/crates/plotters
-      - [ ] TODO fancy static output
+    - [ ] TODO fancy static output (code contributions are welcome)
 
-## Example code
-```rust
-use minimp3::{Decoder as Mp3Decoder, Frame as Mp3Frame, Error as Mp3Error};
-use audio_visualizer::ChannelInterleavement;
-use audio_visualizer::Channels;
-use audio_visualizer::waveform::staticc::png_file::visualize;
-use std::path::PathBuf;
-use std::fs::File;
+- **static spectrum**
+    - [x] very basic PNG output with the option to highlight specific frequencies
+      (definitely needs more work, code contributions are welcome)
+    - [x] PNG output with basic axes/labels using https://crates.io/crates/plotters
+      (definitely needs more work, code contributions are welcome)
+    - [ ] TODO fancy static output (code contributions are welcome)
 
-/// Example that reads MP3 audio data and prints the waveform to a PNG file.
-fn main() {
-    let mut path = PathBuf::new();
-    path.push("test/samples");
-    path.push("sample_1.mp3");
-    let mut decoder = Mp3Decoder::new(File::open(path).unwrap());
+## (Code) Examples
+There are several examples in the `examples/` directory. Below, you can see some visualization examples.
 
-    let mut lrlr_mp3_samples = vec![];
-    loop {
-        match decoder.next_frame() {
-            Ok(Mp3Frame { data: samples_of_frame, .. }) => {
-                for sample in samples_of_frame {
-                    lrlr_mp3_samples.push(sample);
-                }
-            }
-            Err(Mp3Error::Eof) => break,
-            Err(e) => panic!("{:?}", e),
-        }
-    }
+### Real-time audio + lowpass filter (6.9MB GIF)
+![Example visualization of real-time audio + lowpass filter](res/live_demo_lowpass_filter_green_day_holiday.gif "Example visualization of real-time audio + lowpass filter") \
+On the top you see the original waveform of the song Holiday by Green Day. On the bottom you see the data after a
+lowpass filter was applied. The beats are visible.
 
-    // library function
-    visualize(
-        &lrlr_mp3_samples,
-        Channels::Stereo(ChannelInterleavement::LRLR),
-        "src/test/out",
-        "sample_1_waveform.png"
-    );
-}
-```
+### Real-time audio + frequency spectrum (5.4MB GIF)
+![Example visualization of real-time audio + lowpass filter](res/live_demo_spectrum_green_day_holiday.gif "Example visualization of real-time audio + lowpass filter") \
+On the top you see the original waveform of the song Holiday by Green Day. On the bottom you see
+the frequency spectrum of the latest 46ms of audio. Frequencies <2000Hz are clearly present.
+
+
+### Example of a static waveform
+
+![Example visualization of a waveform](png_waveform_example.png "Example visualization of a waveform")
+
+### Example of a static spectrum
+
+![Example visualization of a spectrum (0-140hz)](plotters_spectrum_example.png "Example visualization of a spectrum (0-140hz)")
+
+## MSRV
+The MSRV is 1.56.1 stable.
