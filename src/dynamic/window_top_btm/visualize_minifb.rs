@@ -1,7 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2021 Philipp Schuster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 //! Helps to visualize audio data
 
-use crate::dynamic::live_input_visualize::pixel_buf::PixelBuf;
-use crate::dynamic::live_input_visualize::{
+use crate::dynamic::window_top_btm::pixel_buf::PixelBuf;
+use crate::dynamic::window_top_btm::{
     AUDIO_SAMPLE_HISTORY_LEN, SAMPLING_RATE, TIME_PER_SAMPLE,
 };
 use minifb::{Window, WindowOptions};
@@ -163,10 +186,11 @@ mod tests {
     use super::*;
     use minifb::Key;
 
+    #[ignore]
     #[test]
     fn test_minifb_window() {
         let (mut window, _, _, _) =
-            super::setup_window("Test", None, None, -5.0..0.0, 0.0..5.01, "x-axis", "y-axis");
+            super::setup_window("Test", None, None, Some(-5.0..0.0), Some(0.0..5.01), "x-axis", "y-axis");
         while window.is_open() && !window.is_key_down(Key::Escape) {
             // REQUIRED to get keyboard and mouse events (such as close)
             window.update();

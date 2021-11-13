@@ -1,4 +1,4 @@
-//! Static spectrum analysis: print to PNG file.
+//! Static spectrum analysis: print spectrum to PNG file.
 
 use crate::util::png::write_png_file_rgb_tuples;
 use std::collections::BTreeMap;
@@ -62,8 +62,7 @@ pub fn spectrum_static_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::TEST_OUT_DIR;
-    use std::f32::NAN;
+    use crate::tests::testutil::TEST_OUT_DIR;
 
     #[test]
     fn test_visualize_sine_waves_spectrum() {
@@ -99,7 +98,7 @@ mod tests {
     #[should_panic]
     fn test_panic_on_NAN() {
         let mut spectrum = BTreeMap::new();
-        spectrum.insert(0, NAN);
+        spectrum.insert(0, f32::NAN);
 
         spectrum_static_png_visualize(
             &spectrum,

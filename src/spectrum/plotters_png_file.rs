@@ -1,4 +1,4 @@
-//! Static spectrum analysis: print to PNG file.
+//! Static spectrum analysis: print spectrum to PNG file.
 
 use plotters::prelude::*;
 use std::collections::BTreeMap;
@@ -80,8 +80,8 @@ pub fn spectrum_static_plotters_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::TEST_OUT_DIR;
     use std::f32::NAN;
+    use crate::tests::testutil::TEST_OUT_DIR;
 
     #[test]
     fn test_visualize_sine_waves_spectrum_plotters() {

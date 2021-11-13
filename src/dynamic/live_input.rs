@@ -1,5 +1,30 @@
+/*
+MIT License
+
+Copyright (c) 2021 Philipp Schuster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 //! This module enables to record audio and store the latest audio data in a synchronized
 //! ringbuffer. See [`setup_audio_input_loop`].
+//!
+//! It uses the [`cpal`] crate to record audio.
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{BufferSize, Device, FrameCount, SampleRate, StreamConfig};
@@ -14,12 +39,8 @@ use std::sync::{Arc, Mutex};
 pub fn setup_audio_input_loop(
     latest_audio_data: Arc<Mutex<AllocRingBuffer<f32>>>,
     preferred_input_dev: Option<cpal::Device>,
+    sampling_rate: u32,
 ) -> cpal::Stream {
-    debug_assert_eq!(
-        latest_audio_data.lock().unwrap().len(),
-        super::AUDIO_SAMPLE_HISTORY_LEN,
-        "the buffer must be initialized with the correct amount of zeroes"
-    );
 
     let input = preferred_input_dev.unwrap_or_else(|| {
         let host = cpal::default_host();
@@ -39,7 +60,7 @@ pub fn setup_audio_input_loop(
     let cfg = StreamConfig {
         // I do only mono analysis here
         channels: 1,
-        sample_rate: SampleRate(super::SAMPLING_RATE as u32),
+        sample_rate: SampleRate(sampling_rate),
         // the lower, the better. We store the data in a ringbuffer anyway.
         // In practise, the buffer size received by the audio backend is variable
         // (at least on ALSA) anyway.

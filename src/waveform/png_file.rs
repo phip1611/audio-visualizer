@@ -23,19 +23,21 @@ SOFTWARE.
 */
 //! Static waveform visualization which exports the waveform to a PNG file.
 
+use crate::util::png::write_png_file_rgb_tuples;
 use crate::Channels;
-use plotters::prelude::*;
 use std::path::PathBuf;
 
-/// Visualizes audio as a waveform in a png file using "plotters" crate.
-
+/// Visualizes audio as a waveform in a png file in the most simple way.
+/// There are no axes. If the audio data is mono, it creates one file.
 /// If the data is stereo, it creates two files (with "left_" and "right_" prefix).
-pub fn waveform_static_plotters_png_visualize(
+pub fn waveform_static_png_visualize(
     samples: &[i16],
     channels: Channels,
     directory: &str,
     filename: &str,
 ) {
+    let image_width = 1500;
+    let image_height = 200;
     if channels.is_stereo() {
         assert_eq!(
             0,
@@ -43,13 +45,13 @@ pub fn waveform_static_plotters_png_visualize(
             "If stereo is provided, the length of the audio data must be even!"
         );
         let (left, right) = channels.stereo_interleavement().to_channel_data(samples);
-        waveform_static_plotters_png_visualize(
+        waveform_static_png_visualize(
             &left,
             Channels::Mono,
             directory,
             &format!("left_{}", filename),
         );
-        waveform_static_plotters_png_visualize(
+        waveform_static_png_visualize(
             &right,
             Channels::Mono,
             directory,
@@ -58,66 +60,54 @@ pub fn waveform_static_plotters_png_visualize(
         return;
     }
 
+    // needed for offset calculation; width per sample
+    let width_per_sample = image_width as f64 / samples.len() as f64;
+    // height in pixel per possible value of a sample; counts in that the y axis lays in the middle
+    let height_per_max_amplitude = image_height as f64 / 2_f64 / i16::max_value() as f64;
+
+    // RGB image data
+    let mut image = vec![vec![(255, 255, 255); image_width]; image_height];
+    for (sample_index, sample_value) in samples.into_iter().enumerate() {
+        // x offset; from left
+        let x = (sample_index as f64 * width_per_sample) as usize;
+        // y offset; from top
+        // image_height/2: there is our y-axis
+        let sample_value = *sample_value as f64 * -1.0; // y axis grows downwards
+        let mut y = ((image_height / 2) as f64 + sample_value * height_per_max_amplitude) as usize;
+
+        // due to rounding it can happen that we get out of bounds
+        if y == image_height {
+            y = y - 1;
+        }
+
+        image[y][x] = (0, 0, 0);
+    }
+
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);
-
-    let mut max = 0;
-    for sample in samples {
-        let sample = *sample as i32;
-        let sample = sample.abs();
-        if sample > max {
-            max = sample;
-        }
-    }
-
-    let width = (samples.len() / 5) as u32;
-    let width = if width > 4000 {
-        4000
-    } else {
-        width
-    };
-    let root = BitMapBackend::new(&path, (width as u32, 1000)).into_drawing_area();
-    root.fill(&WHITE).unwrap();
-    let mut chart = ChartBuilder::on(&root)
-        .caption("y=music(t)", ("sans-serif", 50).into_font())
-        .margin(5)
-        .x_label_area_size(30)
-        .y_label_area_size(30)
-        .build_cartesian_2d(0.0..samples.len() as f32, (-1 * max) as f32..max as f32)
-        .unwrap();
-
-    chart.configure_mesh().draw().unwrap();
-
-    chart
-        .draw_series(LineSeries::new(
-            // (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
-            samples
-                .iter()
-                .into_iter()
-                .enumerate()
-                .map(|(sample_i, amplitude)| (sample_i as f32, *amplitude as f32)),
-            &RED,
-        ))
-        .unwrap()
-        // .label("y = music(t)")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
-
-    chart
-        .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
-        .draw()
-        .unwrap();
+    write_png_file_rgb_tuples(&path, &image);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_support::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
     use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
     use std::fs::File;
+    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
+
+    /// This test works, if it doesn't panic.
+    #[test]
+    fn test_no_out_of_bounds_panic() {
+        let audio_data = vec![i16::MAX, i16::MIN];
+        waveform_static_png_visualize(
+            &audio_data,
+            Channels::Mono,
+            TEST_OUT_DIR,
+            "sample_1_waveform-test-out-of-bounds-check.png",
+        );
+    }
 
     #[test]
     fn test_visualize_png_output() {
@@ -142,11 +132,11 @@ mod tests {
             }
         }
 
-        waveform_static_plotters_png_visualize(
+        waveform_static_png_visualize(
             &lrlr_mp3_samples,
             Channels::Stereo(ChannelInterleavement::LRLR),
             TEST_OUT_DIR,
-            "waveform_static_plotters_png_visualize_example.png",
+            "waveform_static_png_visualize_example.png",
         );
     }
 }

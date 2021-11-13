@@ -1,6 +1,34 @@
-use crate::dynamic::live_input_visualize::live_input::setup_audio_input_loop;
-use crate::dynamic::live_input_visualize::visualize_minifb::{
-    get_drawing_areas, setup_window, DEFAULT_H, DEFAULT_W,
+/*
+MIT License
+
+Copyright (c) 2021 Philipp Schuster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+//! This module provides the functionality to display a GUI window, where the upper
+//! half shows the real-time recorded audio data whereas the lower half shows a
+//! diagram of transformed data, such as a lowpass filter or a a frequency spectrum.
+//!
+//! It uses the [`minifb`] crate to display GUI windows.
+use crate::dynamic::live_input::setup_audio_input_loop;
+use crate::dynamic::window_top_btm::visualize_minifb::{
+    DEFAULT_H, DEFAULT_W, get_drawing_areas, setup_window,
 };
 use cpal::traits::StreamTrait;
 use minifb::Key;
@@ -30,7 +58,6 @@ pub const AUDIO_SAMPLE_HISTORY_LEN: usize = (SAMPLING_RATE as usize * 5).next_po
 const REFRESH_RATE: f64 = 144.0;
 const REFRESH_S: f64 = 1.0 / REFRESH_RATE;
 
-pub mod live_input;
 pub mod pixel_buf;
 pub mod visualize_minifb;
 
@@ -85,7 +112,7 @@ pub fn open_window_connect_audio(
     audio_data_transform_fn: TransformFn,
 ) {
     let mut latest_audio_data = init_ringbuffer();
-    let stream = setup_audio_input_loop(latest_audio_data.clone(), preferred_input_dev);
+    let stream = setup_audio_input_loop(latest_audio_data.clone(), preferred_input_dev, SAMPLING_RATE as u32);
     // start recording; audio will be continuously stored in "latest_audio_data"
     stream.play().unwrap();
     let (mut window, top_cs, btm_cs, mut pixel_buf) = setup_window(
@@ -198,16 +225,18 @@ fn fill_chart_waveform_over_time(
 mod tests {
     use super::*;
 
+    #[ignore]
     #[test]
     fn test_record_live_audio_and_visualize() {
         open_window_connect_audio(
             "Test",
             None,
             None,
-            -10.0..0.0,
-            -1.0..1.0,
+            None,
+            None,
             "x-axis",
             "y-axis",
+            None,
             TransformFn::Basic(|x| x.to_vec()),
         );
     }

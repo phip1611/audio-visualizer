@@ -21,8 +21,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! Waveform analysis/visualization of static samples. Typo in the module is because
-//! 'static' is a reserved keyword in Rust.
+use crate::tests::testutil::sine::sine_wave_audio_data_multiple;
+use crate::tests::testutil::TEST_OUT_DIR;
+use crate::waveform::png_file::waveform_static_png_visualize;
+use crate::Channels;
 
-pub mod plotters_png_file;
-pub mod png_file;
+#[test]
+fn visualize_sine_50hz_plus_250hz() {
+    let sampling_rate = 44100;
+    let duration_ms = 100;
+    let sin_audio_sum = sine_wave_audio_data_multiple(
+        // 50Hz in 100ms => sin wave will have five time periods
+        // 250Hz in 100ms => sin wave will have twenty-five time periods
+        &vec![50_f64, 250_f64],
+        sampling_rate,
+        duration_ms,
+    );
+    waveform_static_png_visualize(
+        &sin_audio_sum,
+        Channels::Mono,
+        TEST_OUT_DIR,
+        "sinus-wave-50hz_plus_250hz.png",
+    )
+}

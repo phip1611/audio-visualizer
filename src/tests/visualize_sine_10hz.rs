@@ -22,7 +22,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// Directory with test samples (e.g. mp3) can be found here.
-pub const TEST_SAMPLES_DIR: &str = "test/samples";
-/// If tests create files, they should be stored here.
-pub const TEST_OUT_DIR: &str = "test/out";
+use crate::tests::testutil::sine::sine_wave_audio_data;
+use crate::tests::testutil::TEST_OUT_DIR;
+use crate::waveform::png_file::waveform_static_png_visualize;
+use crate::Channels;
+
+#[test]
+fn visualize_sine_10hz() {
+    let frequency = 10_f64;
+    let sampling_rate = 44100;
+    let duration_ms = 1000;
+    // we expect 10 time periods of the sine wav in the time interval
+    let audio_signal = sine_wave_audio_data(frequency, sampling_rate, duration_ms);
+    waveform_static_png_visualize(
+        &audio_signal,
+        Channels::Mono,
+        TEST_OUT_DIR,
+        "sinus-wave-10hz.png",
+    )
+}
