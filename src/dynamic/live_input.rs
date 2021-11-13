@@ -117,7 +117,7 @@ pub fn setup_audio_input_loop(
         "only supports Mono or Stereo channels!"
     );
 
-    if cfg.sample_rate.0 != 44100 && cfg.sample_rate.0 != 44800 {
+    if cfg.sample_rate.0 != 44100 && cfg.sample_rate.0 != 48000 {
         eprintln!(
             "WARN: sampling rate is {}, but the crate was only tested with 44,1/48khz.",
             cfg.sample_rate.0
