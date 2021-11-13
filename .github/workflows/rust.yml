@@ -19,6 +19,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: sudo apt update && sudo apt install libasound2-dev libxkbcommon-dev -y
       - run: cargo build --all-targets
+      - run: cargo test
 
   style_checks:
     runs-on: ubuntu-latest
