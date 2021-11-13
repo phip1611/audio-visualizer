@@ -67,7 +67,7 @@ pub fn waveform_static_png_visualize(
 
     // RGB image data
     let mut image = vec![vec![(255, 255, 255); image_width]; image_height];
-    for (sample_index, sample_value) in samples.into_iter().enumerate() {
+    for (sample_index, sample_value) in samples.iter().enumerate() {
         // x offset; from left
         let x = (sample_index as f64 * width_per_sample) as usize;
         // y offset; from top
@@ -77,7 +77,7 @@ pub fn waveform_static_png_visualize(
 
         // due to rounding it can happen that we get out of bounds
         if y == image_height {
-            y = y - 1;
+            y -= 1;
         }
 
         image[y][x] = (0, 0, 0);
@@ -92,10 +92,10 @@ pub fn waveform_static_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
     use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
     use std::fs::File;
-    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
 
     /// This test works, if it doesn't panic.
     #[test]

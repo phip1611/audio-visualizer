@@ -21,12 +21,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use minimp3::{Decoder as Mp3Decoder, Frame as Mp3Frame, Error as Mp3Error};
+use audio_visualizer::waveform::png_file::waveform_static_png_visualize;
 use audio_visualizer::ChannelInterleavement;
 use audio_visualizer::Channels;
-use audio_visualizer::waveform::png_file::waveform_static_png_visualize;
-use std::path::PathBuf;
+use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
 use std::fs::File;
+use std::path::PathBuf;
 
 fn main() {
     let mut path = PathBuf::new();
@@ -37,7 +37,10 @@ fn main() {
     let mut lrlr_mp3_samples = vec![];
     loop {
         match decoder.next_frame() {
-            Ok(Mp3Frame { data: samples_of_frame, .. }) => {
+            Ok(Mp3Frame {
+                data: samples_of_frame,
+                ..
+            }) => {
                 for sample in samples_of_frame {
                     lrlr_mp3_samples.push(sample);
                 }
@@ -51,6 +54,6 @@ fn main() {
         &lrlr_mp3_samples,
         Channels::Stereo(ChannelInterleavement::LRLR),
         "test/samples",
-        "sample_1_waveform.png"
+        "sample_1_waveform.png",
     );
 }

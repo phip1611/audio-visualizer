@@ -27,9 +27,10 @@ SOFTWARE.
 //! It uses the [`cpal`] crate to record audio.
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{BufferSize, Device, FrameCount, SampleRate, StreamConfig};
-use ringbuffer::{AllocRingBuffer, RingBuffer};
-use std::collections::{BTreeMap, BTreeSet};
+use cpal::{
+    BufferSize, Device, FrameCount, Host, HostId, SampleRate, StreamConfig, SupportedBufferSize,
+};
+use ringbuffer::AllocRingBuffer;
 use std::sync::{Arc, Mutex};
 
 /// Sets up audio recording with the [`cpal`] library on the given audio input device.
@@ -41,20 +42,27 @@ pub fn setup_audio_input_loop(
     preferred_input_dev: Option<cpal::Device>,
     sampling_rate: u32,
 ) -> cpal::Stream {
-
-    let input = preferred_input_dev.unwrap_or_else(|| {
-        let host = cpal::default_host();
-        let input = host.default_input_device().unwrap_or_else(|| {
-            panic!(
-                "No default audio input device found for host {}",
-                host.id().name()
-            )
+    let (host, input_dev) = preferred_input_dev
+        .map(|dev| (cpal::default_host(), dev))
+        .unwrap_or_else(|| {
+            let host = cpal::default_host();
+            let input_dev = host.default_input_device().unwrap_or_else(|| {
+                panic!(
+                    "No default audio input device found for host {}",
+                    host.id().name()
+                )
+            });
+            (host, input_dev)
         });
-        input
-    });
+
     println!(
-        "Using input device: {}",
-        input.name().as_ref().map(|x| x.as_str()).unwrap_or("<unknown>")
+        "Using input device '{}' with audio backend '{:?}'",
+        input_dev
+            .name()
+            .as_ref()
+            .map(|x| x.as_str())
+            .unwrap_or("<unknown>"),
+        host.id()
     );
 
     let cfg = StreamConfig {
@@ -64,17 +72,17 @@ pub fn setup_audio_input_loop(
         // the lower, the better. We store the data in a ringbuffer anyway.
         // In practise, the buffer size received by the audio backend is variable
         // (at least on ALSA) anyway.
-        buffer_size: BufferSize::Fixed(128),
+        buffer_size: get_buffersize(&host, &input_dev),
     };
 
-    input
+    input_dev
         .build_input_stream(
             &cfg,
             // this is pretty cool by "cpal"; we can use u16, i16 or f32 and
             // the type system does all the magic behind the scenes
             move |data: &[f32], _info| {
                 let mut audio_buf = latest_audio_data.lock().unwrap();
-                audio_buf.extend(data.iter().map(|x| *x));
+                audio_buf.extend(data.iter().copied());
             },
             |_err| {},
         )
@@ -91,15 +99,38 @@ pub fn list_input_devs() -> Vec<(String, cpal::Device)> {
         .unwrap()
         .map(|dev| {
             (
-                dev.name()
-                    .map(|x| x.clone())
-                    .unwrap_or(String::from("<unknown>")),
+                dev.name().unwrap_or_else(|_| String::from("<unknown>")),
                 dev,
             )
         })
         .collect();
     devs.sort_by(|(n1, _), (n2, _)| n1.cmp(n2));
     devs
+}
+
+/// Determines a buffersize that works for the given hardware and the given audio backend.
+fn get_buffersize(host: &Host, dev: &Device) -> BufferSize {
+    // I noticed that at least some input devices on ALSA fail with "snd_pcm_hw_params_set_buffer_size",
+    // even if I'm sure that I set the correct buffer size. I don't know what's the problem..
+    //
+    // Quick and dirty solution: On Alsa always use "Default", which works..
+    if matches!(host.id(), HostId::Alsa) {
+        BufferSize::Default
+    } else {
+        // important that we don't choose a value that is too low for the hardware
+        let application_desired_buffer_size: FrameCount = 128;
+        let hw_desired_buffer_size = match dev.default_input_config().unwrap().buffer_size() {
+            SupportedBufferSize::Range { min, .. } => *min,
+            SupportedBufferSize::Unknown => application_desired_buffer_size,
+        };
+        let buffer_size = if hw_desired_buffer_size > application_desired_buffer_size {
+            hw_desired_buffer_size
+        } else {
+            application_desired_buffer_size
+        };
+
+        BufferSize::Fixed(buffer_size)
+    }
 }
 
 #[cfg(test)]

@@ -71,11 +71,7 @@ pub fn waveform_static_plotters_png_visualize(
     }
 
     let width = (samples.len() / 5) as u32;
-    let width = if width > 4000 {
-        4000
-    } else {
-        width
-    };
+    let width = if width > 4000 { 4000 } else { width };
     let root = BitMapBackend::new(&path, (width as u32, 1000)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let mut chart = ChartBuilder::on(&root)
@@ -83,7 +79,7 @@ pub fn waveform_static_plotters_png_visualize(
         .margin(5)
         .x_label_area_size(30)
         .y_label_area_size(30)
-        .build_cartesian_2d(0.0..samples.len() as f32, (-1 * max) as f32..max as f32)
+        .build_cartesian_2d(0.0..samples.len() as f32, -max as f32..max as f32)
         .unwrap();
 
     chart.configure_mesh().draw().unwrap();
@@ -113,10 +109,10 @@ pub fn waveform_static_plotters_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
     use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
     use std::fs::File;
-    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
 
     #[test]
     fn test_visualize_png_output() {

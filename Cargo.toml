@@ -19,7 +19,9 @@ documentation = "https://docs.rs/audio-visualizer/"
 [dependencies]
 png = "0.17"
 minimp3 = "0.5"
-plotters = "0.3"
+# faster compilation: remove unnecessary features
+plotters = { version = "0.3", default-features = false, features = ["bitmap_backend", "line_series"] }
+plotters-bitmap = "0.3"
 ringbuffer = "0.8"
 cpal = "0.13"
 minifb = "0.19" # window

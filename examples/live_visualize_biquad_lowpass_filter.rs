@@ -22,21 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use audio_visualizer::dynamic::live_input::list_input_devs;
-use audio_visualizer::dynamic::window_top_btm::visualize_minifb::setup_window;
-use audio_visualizer::dynamic::window_top_btm::{
-    open_window_connect_audio, TransformFn, SAMPLING_RATE,
-};
+use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type, Q_BUTTERWORTH_F32};
 use cpal::traits::DeviceTrait;
-use minifb::{Key, KeyRepeat, Window, WindowOptions};
-use spectrum_analyzer::scaling::divide_by_N;
-use spectrum_analyzer::windows::hann_window;
-use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, FrequencyValue};
-use std::cell::RefCell;
-use std::cmp::max;
-use std::io::{stdin, BufRead, Read};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::io::{stdin, BufRead};
 
 /// Example that creates a live visualization of realtime audio data
 /// through a lowpass filter. **Execute this with `--release`, otherwise it is very laggy!**.

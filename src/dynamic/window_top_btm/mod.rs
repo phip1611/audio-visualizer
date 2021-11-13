@@ -28,26 +28,22 @@ SOFTWARE.
 //! It uses the [`minifb`] crate to display GUI windows.
 use crate::dynamic::live_input::setup_audio_input_loop;
 use crate::dynamic::window_top_btm::visualize_minifb::{
-    DEFAULT_H, DEFAULT_W, get_drawing_areas, setup_window,
+    get_drawing_areas, setup_window, DEFAULT_H, DEFAULT_W,
 };
 use cpal::traits::StreamTrait;
 use minifb::Key;
 use plotters::chart::ChartContext;
 use plotters::coord::cartesian::Cartesian2d;
 use plotters::coord::types::RangedCoordf64;
-use plotters::element::{Circle, EmptyElement, PathElement, Text};
-use plotters::prelude::{BitMapBackend, IntoFont};
-use plotters::series::{LineSeries, PointSeries};
-use plotters::style::{BLACK, CYAN, RED};
+use plotters::prelude::BitMapBackend;
+use plotters::series::LineSeries;
+use plotters::style::{BLACK, CYAN};
 use plotters_bitmap::bitmap_pixel::BGRXPixel;
 use ringbuffer::{AllocRingBuffer, RingBufferExt};
 use std::borrow::{Borrow, BorrowMut};
-use std::mem::size_of;
 use std::ops::Range;
-use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub const SAMPLING_RATE: f64 = 44100.0;
 pub const TIME_PER_SAMPLE: f64 = 1.0 / SAMPLING_RATE;
@@ -65,6 +61,7 @@ pub mod visualize_minifb;
 /// be transformed, and thus, how it should be displayed in the lower part of the window.
 ///
 /// The function is called every x milliseconds (refresh rate of window).
+#[allow(missing_debug_implementations)]
 pub enum TransformFn<'a> {
     /// Synchronized x-axis with the original data. Useful for transformations on the
     /// waveform, such as a (lowpass) filter.
@@ -100,6 +97,7 @@ pub enum TransformFn<'a> {
 /// - `y_desc` Description for the y-axis of the lower (=custom) diagram.
 /// - `preferred_input_dev` Preferred audio input device. If None, it uses the default input device.
 /// - `audio_data_transform_fn` See [`open_window_connect_audio`].
+#[allow(clippy::too_many_arguments)]
 pub fn open_window_connect_audio(
     name: &str,
     preferred_height: Option<usize>,
@@ -111,8 +109,12 @@ pub fn open_window_connect_audio(
     preferred_input_dev: Option<cpal::Device>,
     audio_data_transform_fn: TransformFn,
 ) {
-    let mut latest_audio_data = init_ringbuffer();
-    let stream = setup_audio_input_loop(latest_audio_data.clone(), preferred_input_dev, SAMPLING_RATE as u32);
+    let latest_audio_data = init_ringbuffer();
+    let stream = setup_audio_input_loop(
+        latest_audio_data.clone(),
+        preferred_input_dev,
+        SAMPLING_RATE as u32,
+    );
     // start recording; audio will be continuously stored in "latest_audio_data"
     stream.play().unwrap();
     let (mut window, top_cs, btm_cs, mut pixel_buf) = setup_window(
@@ -186,7 +188,9 @@ fn fill_chart_complex_fnc(
     audio_data: Vec<(f64, f64)>,
 ) {
     // dedicated function; otherwise lifetime problems/compiler errors
-   chart.draw_series(LineSeries::new(audio_data.into_iter(), &CYAN)).unwrap();
+    chart
+        .draw_series(LineSeries::new(audio_data.into_iter(), &CYAN))
+        .unwrap();
 }
 
 /// Fills the given chart with the waveform over time, from the past (left) to now/realtime (right).

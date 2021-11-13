@@ -26,6 +26,7 @@ use std::borrow::{Borrow, BorrowMut};
 /// Abstraction that helps to access the Pixel data as `[u32]` and `[u8]`.
 /// Required, because `plotters` bitmap works on `[u8]` and `minifb` on
 /// the other.
+#[derive(Debug)]
 pub struct PixelBuf(pub Vec<u32>);
 impl Borrow<[u8]> for PixelBuf {
     fn borrow(&self) -> &[u8] {

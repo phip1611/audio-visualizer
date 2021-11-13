@@ -10,11 +10,14 @@ pub fn spectrum_static_plotters_png_visualize(
     filename: &str,
 ) {
     // assert no NAN
-    assert!(!frequency_spectrum.iter().any(|(_, f)| f.is_nan()), "There are NAN-values in the spectrum!");
+    assert!(
+        !frequency_spectrum.iter().any(|(_, f)| f.is_nan()),
+        "There are NAN-values in the spectrum!"
+    );
 
     // find maximum for graphics scaling
     let mut max = 0.0;
-    for (_fr, mag) in frequency_spectrum {
+    for mag in frequency_spectrum.values() {
         if *mag > max {
             max = *mag;
         }
@@ -36,10 +39,11 @@ pub fn spectrum_static_plotters_png_visualize(
         width = 700;
     }
 
-    let mut height = 700;
-    if width < 700 {
-        height = (width as f32/0.8) as u32;
-    }
+    let height = if width < 700 {
+        (width as f32 / 0.8) as u32
+    } else {
+        700
+    };
 
     let root = BitMapBackend::new(&path, (width as u32, height)).into_drawing_area();
     root.fill(&WHITE).unwrap();
@@ -80,8 +84,8 @@ pub fn spectrum_static_plotters_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f32::NAN;
     use crate::tests::testutil::TEST_OUT_DIR;
+    use std::f32::NAN;
 
     #[test]
     fn test_visualize_sine_waves_spectrum_plotters() {

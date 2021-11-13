@@ -24,19 +24,15 @@ SOFTWARE.
 //! Helps to visualize audio data
 
 use crate::dynamic::window_top_btm::pixel_buf::PixelBuf;
-use crate::dynamic::window_top_btm::{
-    AUDIO_SAMPLE_HISTORY_LEN, SAMPLING_RATE, TIME_PER_SAMPLE,
-};
+use crate::dynamic::window_top_btm::{AUDIO_SAMPLE_HISTORY_LEN, TIME_PER_SAMPLE};
 use minifb::{Window, WindowOptions};
-use plotters::chart::{
-    ChartBuilder, ChartContext, ChartState, LabelAreaPosition, SeriesLabelPosition,
-};
+use plotters::chart::{ChartBuilder, ChartState};
 use plotters::coord::cartesian::Cartesian2d;
 use plotters::coord::types::RangedCoordf64;
 use plotters::coord::Shift;
 use plotters::drawing::{DrawingArea, IntoDrawingArea};
-use plotters::style::{IntoFont, BLACK, WHITE};
-use plotters_bitmap::bitmap_pixel::{BGRXPixel, RGBPixel};
+use plotters::style::{IntoFont, WHITE};
+use plotters_bitmap::bitmap_pixel::BGRXPixel;
 use plotters_bitmap::BitMapBackend;
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::Range;
@@ -67,6 +63,7 @@ pub const DEFAULT_H: usize = 720;
 /// - chartstate of the upper chart
 /// - chartstate of the lower chart
 /// - the shared pixel buf
+#[allow(clippy::type_complexity)]
 pub fn setup_window(
     name: &str,
     preferred_height: Option<usize>,
@@ -93,8 +90,8 @@ pub fn setup_window(
     let width = preferred_width.unwrap_or(DEFAULT_W);
     let x_range_top = -(AUDIO_SAMPLE_HISTORY_LEN as f64 * TIME_PER_SAMPLE)..0.0;
     let y_range_top = -1.0..1.01;
-    let x_range_btm = preferred_x_range.unwrap_or(x_range_top.clone());
-    let y_range_btm = preferred_y_range.unwrap_or(y_range_top.clone());
+    let x_range_btm = preferred_x_range.unwrap_or_else(|| x_range_top.clone());
+    let y_range_btm = preferred_y_range.unwrap_or_else(|| y_range_top.clone());
 
     // Buffer where we draw the Chart as bitmap into: we update the "minifb" window from it too
     let mut pixel_buf = PixelBuf(vec![0_u32; width * height]);
@@ -183,14 +180,21 @@ fn draw_chart<'a>(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+
     use minifb::Key;
 
     #[ignore]
     #[test]
     fn test_minifb_window() {
-        let (mut window, _, _, _) =
-            super::setup_window("Test", None, None, Some(-5.0..0.0), Some(0.0..5.01), "x-axis", "y-axis");
+        let (mut window, _, _, _) = super::setup_window(
+            "Test",
+            None,
+            None,
+            Some(-5.0..0.0),
+            Some(0.0..5.01),
+            "x-axis",
+            "y-axis",
+        );
         while window.is_open() && !window.is_key_down(Key::Escape) {
             // REQUIRED to get keyboard and mouse events (such as close)
             window.update();

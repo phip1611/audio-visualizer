@@ -11,7 +11,10 @@ pub fn spectrum_static_png_visualize(
     highlighted_frequencies: &[f32],
 ) {
     // assert no NAN
-    assert!(!frequency_spectrum.iter().any(|(_, f)| f.is_nan()), "There are NAN-values in the spectrum!");
+    assert!(
+        !frequency_spectrum.iter().any(|(_, f)| f.is_nan()),
+        "There are NAN-values in the spectrum!"
+    );
 
     let image_width = 5000;
     let image_height = 3000;
@@ -20,15 +23,14 @@ pub fn spectrum_static_png_visualize(
 
     // find maximum for graphics scaling
     let mut max = 0.0;
-    for (_fr, mag) in frequency_spectrum {
+    for mag in frequency_spectrum.values() {
         if *mag > max {
             max = *mag;
         }
     }
 
     let x_step = image_width as f64 / frequency_spectrum.len() as f64;
-    let mut i = 0;
-    for (frequency, mag) in frequency_spectrum {
+    for (i, (frequency, mag)) in frequency_spectrum.iter().enumerate() {
         let mag = mag / max * image_height as f32;
 
         let x = (i as f64 * x_step) as usize;
@@ -50,7 +52,6 @@ pub fn spectrum_static_png_visualize(
             }
             rgb_img[image_height - 1 - j][x] = color;
         }
-        i += 1;
     }
 
     let mut path = PathBuf::new();

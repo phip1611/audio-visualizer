@@ -21,18 +21,17 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::window_top_btm::visualize_minifb::setup_window;
+use audio_visualizer::dynamic::live_input::list_input_devs;
 use audio_visualizer::dynamic::window_top_btm::{
     open_window_connect_audio, TransformFn, SAMPLING_RATE,
 };
-use minifb::{Key, KeyRepeat, Window, WindowOptions};
+use cpal::traits::DeviceTrait;
 use spectrum_analyzer::scaling::divide_by_N;
 use spectrum_analyzer::windows::hann_window;
 use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, FrequencyValue};
 use std::cell::RefCell;
 use std::cmp::max;
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::io::{stdin, BufRead};
 
 /// Example that creates a live visualization of the frequency spectrum of realtime audio data
 /// **Execute this with `--release`, otherwise it is very laggy!**.
@@ -40,7 +39,7 @@ fn main() {
     // Contains the data for the spectrum to be visualized. It contains ordered pairs of
     // `(frequency, frequency_value)`. During each iteration, the frequency value gets
     // combined with `max(old_value * smoothing_factor, new_value)`.
-    let mut visualize_spectrum: RefCell<Vec<(f64, f64)>> = RefCell::new(vec![(0.0, 0.0); 1024]);
+    let visualize_spectrum: RefCell<Vec<(f64, f64)>> = RefCell::new(vec![(0.0, 0.0); 1024]);
 
     // Closure that captures `visualize_spectrum`.
     let to_spectrum_fn = move |audio: &[f32]| {
@@ -80,16 +79,36 @@ fn main() {
         visualize_spectrum.borrow().clone()
     };
 
+    let in_dev = select_input_dev();
     open_window_connect_audio(
         "Test",
         None,
         None,
         // 0.0..22050.0_f64.log(100.0),
         Some(0.0..22050.0),
-        Some(0.0..100.0),
+        Some(0.0..500.0),
         "x-axis",
         "y-axis",
-        None,
+        Some(in_dev),
         TransformFn::Complex(&to_spectrum_fn),
     );
+}
+
+/// Helps to select an input device.
+fn select_input_dev() -> cpal::Device {
+    let mut devs = list_input_devs();
+    assert!(!devs.is_empty(), "no input devices found!");
+    println!();
+    devs.iter().enumerate().for_each(|(i, (name, dev))| {
+        println!(
+            "  [{}] {} {:?}",
+            i,
+            name,
+            dev.default_input_config().unwrap()
+        );
+    });
+    let mut input = String::new();
+    stdin().lock().read_line(&mut input).unwrap();
+    let index = (&input[0..1]).parse::<usize>().unwrap();
+    devs.remove(index).1
 }
