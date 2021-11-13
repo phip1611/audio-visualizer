@@ -1,13 +1,13 @@
 [package]
 name = "audio-visualizer"
 description = """
-Super basic and simple audio visualization library which is especially useful for developers to visually check audio
+Smple audio visualization library which is especially useful for developers to visually check audio
 samples, e.g. by waveform or spectrum. (So far) this library is not capable of doing nice visualizations
 for end users.
 """
-version = "0.2.4"
+version = "0.3.0"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
-edition = "2018"
+edition = "2021"
 keywords = ["audio", "visualizer", "waveform", "spectrum"]
 categories = ["multimedia::audio", "development-tools"]
 readme = "README.md"
@@ -15,11 +15,25 @@ license = "MIT"
 homepage = "https://github.com/phip1611/audio-visualizer"
 repository = "https://github.com/phip1611/audio-visualizer"
 documentation = "https://docs.rs/audio-visualizer/"
+exclude = [
+    "res",
+    "test"
+]
 
 [dependencies]
-png = "0.17.1"
-minimp3 = "0.5.1"
-plotters = "0.3.1"
+png = "0.17"
+minimp3 = "0.5"
+# faster compilation: remove unnecessary features
+plotters = { version = "0.3", default-features = false, features = ["bitmap_backend", "line_series"] }
+plotters-bitmap = "0.3"
+ringbuffer = "0.8"
+cpal = "0.13"
+minifb = "0.19" # window
+
+[dev-dependencies]
+lowpass-filter = "0.2"
+spectrum-analyzer = "1.1"
+biquad = "0.4"
 
 # otherwise FFT and other code is too slow
 [profile.dev]

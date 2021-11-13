@@ -21,7 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! Waveform visualizations.
+//! Module for several waveform visualization implementations.
+//! This module focuses on static visualization. For dynamic visualization,
+//! look into the [`crate::dynamic`] module + corresponding examples in `examples/`.
 
-pub mod dynamic;
-pub mod staticc;
+pub mod plotters_png_file;
+pub mod png_file;

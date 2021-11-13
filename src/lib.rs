@@ -1,14 +1,54 @@
+/*
+MIT License
+
+Copyright (c) 2021 Philipp Schuster
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 //! Super basic and simple audio visualization library which is especially useful for developers to
 //! visually check audio samples, e.g. by waveform or spectrum. (So far) this library is not
 //! capable of doing nice visualizations for end users. Contributions are welcome.
 
+#![deny(
+    clippy::all,
+    clippy::cargo,
+    clippy::nursery,
+    // clippy::restriction,
+    // clippy::pedantic
+)]
+// now allow a few rules which are denied by the above statement
+// --> they are ridiculous and not necessary
+#![allow(
+    clippy::suboptimal_flops,
+    clippy::redundant_pub_crate,
+    clippy::fallible_impl_from
+)]
+#![deny(missing_debug_implementations)]
+#![deny(rustdoc::all)]
+
 pub mod spectrum;
 pub mod waveform;
 
-// public for examples
+pub mod dynamic;
+#[cfg(test)]
+pub mod tests;
 pub mod util;
-// public for examples
-pub mod test_support;
 
 /// Describes the interleavement of audio data if
 /// it is not mono but stereo.
@@ -22,17 +62,11 @@ pub enum ChannelInterleavement {
 }
 
 impl ChannelInterleavement {
-    pub fn is_lrlr(&self) -> bool {
-        match self {
-            ChannelInterleavement::LRLR => true,
-            _ => false,
-        }
+    pub const fn is_lrlr(&self) -> bool {
+        matches!(self, ChannelInterleavement::LRLR)
     }
-    pub fn is_lllrr(&self) -> bool {
-        match self {
-            ChannelInterleavement::LLRR => true,
-            _ => false,
-        }
+    pub const fn is_lllrr(&self) -> bool {
+        matches!(self, ChannelInterleavement::LLRR)
     }
     /// Transforms the interleaved data into two vectors.
     /// Returns a tuple. First/left value is left channel, second/right value is right channel.
@@ -52,11 +86,11 @@ impl ChannelInterleavement {
             }
         } else {
             let n = interleaved_data.len();
-            for sample_i in 0..n / 2 {
-                left_data.push(interleaved_data[sample_i]);
+            for sample_i in interleaved_data.iter().take(n / 2).copied() {
+                left_data.push(sample_i);
             }
-            for sample_i in n / 2..n {
-                right_data.push(interleaved_data[sample_i]);
+            for sample_i in interleaved_data.iter().skip(n / 2).copied() {
+                right_data.push(sample_i);
             }
         }
 
@@ -72,32 +106,18 @@ pub enum Channels {
 }
 
 impl Channels {
-    pub fn is_mono(&self) -> bool {
-        match self {
-            Channels::Mono => true,
-            _ => false,
-        }
+    pub const fn is_mono(&self) -> bool {
+        matches!(self, Channels::Mono)
     }
 
-    pub fn is_stereo(&self) -> bool {
-        match self {
-            Channels::Stereo(_) => true,
-            _ => false,
-        }
+    pub const fn is_stereo(&self) -> bool {
+        matches!(self, Channels::Stereo(_))
     }
 
     pub fn stereo_interleavement(&self) -> ChannelInterleavement {
         match self {
-            Channels::Stereo(interleavmement) => interleavmement.clone(),
+            Channels::Stereo(interleavmement) => *interleavmement,
             _ => panic!("Not stereo"),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
     }
 }
