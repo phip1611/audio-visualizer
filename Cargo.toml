@@ -22,7 +22,6 @@ exclude = [
 
 [dependencies]
 png = "0.17"
-minimp3 = "0.5"
 # faster compilation: remove unnecessary features
 plotters = { version = "0.3", default-features = false, features = ["bitmap_backend", "line_series"] }
 plotters-bitmap = "0.3"
@@ -31,6 +30,7 @@ cpal = "0.13"
 minifb = "0.19" # window
 
 [dev-dependencies]
+minimp3 = "0.5"
 lowpass-filter = "0.2"
 spectrum-analyzer = "1.1"
 biquad = "0.4"

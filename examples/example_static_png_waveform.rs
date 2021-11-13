@@ -53,7 +53,7 @@ fn main() {
     waveform_static_png_visualize(
         &lrlr_mp3_samples,
         Channels::Stereo(ChannelInterleavement::LRLR),
-        "test/samples",
+        "test/out",
         "sample_1_waveform.png",
     );
 }
