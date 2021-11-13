@@ -72,8 +72,8 @@ pub fn sine_wave_audio_data_multiple(
 
         // BEGIN: add sine waves
         let mut acc = 0.0;
-        for i_sine_wave in 0..sine_waves.len() {
-            acc += sine_waves[i_sine_wave](t);
+        for sine_wave in &sine_waves {
+            acc += sine_wave(t);
         }
         // END: add sine waves
 

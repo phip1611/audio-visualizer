@@ -33,7 +33,7 @@ fn visualize_sine_50hz_plus_250hz() {
     let sin_audio_sum = sine_wave_audio_data_multiple(
         // 50Hz in 100ms => sin wave will have five time periods
         // 250Hz in 100ms => sin wave will have twenty-five time periods
-        &vec![50_f64, 250_f64],
+        &[50_f64, 250_f64],
         sampling_rate,
         duration_ms,
     );

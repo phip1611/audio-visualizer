@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::list_input_devs;
+use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type, Q_BUTTERWORTH_F32};
 use cpal::traits::DeviceTrait;
@@ -39,12 +39,12 @@ fn main() {
         None,
         "time (seconds)",
         "Amplitude (with Biquad Lowpass filter)",
-        Some(in_dev),
+        AudioDevAndCfg::new(Some(in_dev), None),
         // lowpass filter
-        TransformFn::Basic(|vals| {
+        TransformFn::Basic(|vals, sampling_rate| {
             // Cutoff and sampling frequencies
             let f0 = 80.hz();
-            let fs = 44.1.khz();
+            let fs = sampling_rate.hz();
 
             // Create coefficients for the biquads
             let coeffs =
@@ -62,13 +62,16 @@ fn main() {
 fn select_input_dev() -> cpal::Device {
     let mut devs = list_input_devs();
     assert!(!devs.is_empty(), "no input devices found!");
+    if devs.len() == 1 {
+        return devs.remove(0).1;
+    }
     println!();
     devs.iter().enumerate().for_each(|(i, (name, dev))| {
         println!(
             "  [{}] {} {:?}",
             i,
             name,
-            dev.default_input_config().unwrap()
+            dev.supported_input_configs().unwrap().collect::<Vec<_>>()
         );
     });
     let mut input = String::new();

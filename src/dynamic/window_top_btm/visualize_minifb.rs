@@ -24,7 +24,6 @@ SOFTWARE.
 //! Helps to visualize audio data
 
 use crate::dynamic::window_top_btm::pixel_buf::PixelBuf;
-use crate::dynamic::window_top_btm::{AUDIO_SAMPLE_HISTORY_LEN, TIME_PER_SAMPLE};
 use minifb::{Window, WindowOptions};
 use plotters::chart::{ChartBuilder, ChartState};
 use plotters::coord::cartesian::Cartesian2d;
@@ -57,13 +56,15 @@ pub const DEFAULT_H: usize = 720;
 ///                       If no value is present, the same value as for the upper diagram is used.
 /// - `x_desc` Description for the x-axis of the lower (=custom) diagram.
 /// - `y_desc` Description for the y-axis of the lower (=custom) diagram.
+/// - `audio_buffer_len` Number of elements in the audio buffer. Needed for the scaling of the x-axis.
+/// - `time_per_sample` Time per sample. Needed for the scaling of the x-axis.
 ///
 /// # Returns
 /// - window object
 /// - chartstate of the upper chart
 /// - chartstate of the lower chart
 /// - the shared pixel buf
-#[allow(clippy::type_complexity)]
+#[allow(clippy::type_complexity, clippy::too_many_arguments)]
 pub fn setup_window(
     name: &str,
     preferred_height: Option<usize>,
@@ -72,23 +73,19 @@ pub fn setup_window(
     preferred_y_range: Option<Range<f64>>,
     x_desc: &str,
     y_desc: &str,
+    audio_buffer_len: usize,
+    time_per_sample: f64,
 ) -> (
     Window,
     ChartState<Cartesian2d<RangedCoordf64, RangedCoordf64>>,
     ChartState<Cartesian2d<RangedCoordf64, RangedCoordf64>>,
     PixelBuf,
 ) {
-    let mut window = Window::new(
-        &String::from(name),
-        DEFAULT_W,
-        DEFAULT_H,
-        WindowOptions::default(),
-    )
-    .unwrap();
-
     let height = preferred_height.unwrap_or(DEFAULT_H);
     let width = preferred_width.unwrap_or(DEFAULT_W);
-    let x_range_top = -(AUDIO_SAMPLE_HISTORY_LEN as f64 * TIME_PER_SAMPLE)..0.0;
+    let mut window =
+        Window::new(&String::from(name), width, height, WindowOptions::default()).unwrap();
+    let x_range_top = -(audio_buffer_len as f64 * time_per_sample)..0.0;
     let y_range_top = -1.0..1.01;
     let x_range_btm = preferred_x_range.unwrap_or_else(|| x_range_top.clone());
     let y_range_btm = preferred_y_range.unwrap_or_else(|| y_range_top.clone());
@@ -194,6 +191,8 @@ mod tests {
             Some(0.0..5.01),
             "x-axis",
             "y-axis",
+            (44100 * 5_usize).next_power_of_two(),
+            1.0 / 44100.0,
         );
         while window.is_open() && !window.is_key_down(Key::Escape) {
             // REQUIRED to get keyboard and mouse events (such as close)

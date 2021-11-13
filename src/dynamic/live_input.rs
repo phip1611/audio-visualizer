@@ -28,65 +28,136 @@ SOFTWARE.
 
 use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::{
-    BufferSize, Device, FrameCount, Host, HostId, SampleRate, StreamConfig, SupportedBufferSize,
+    Device,
 };
 use ringbuffer::AllocRingBuffer;
+use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
 
-/// Sets up audio recording with the [`cpal`] library on the given audio input device.
-/// If no input device is given, it uses the default input device. Panics, if it not present.
-///
-/// Appends all audio data to the ringbuffer `latest_audio_data`.
-pub fn setup_audio_input_loop(
-    latest_audio_data: Arc<Mutex<AllocRingBuffer<f32>>>,
-    preferred_input_dev: Option<cpal::Device>,
-    sampling_rate: u32,
-) -> cpal::Stream {
-    let (host, input_dev) = preferred_input_dev
-        .map(|dev| (cpal::default_host(), dev))
-        .unwrap_or_else(|| {
+/// Describes the audio input device that should be used and the config for the input stream.
+/// Caller must be certain, that the config works for the given device on the current platform.
+pub struct AudioDevAndCfg {
+    /// The input device.
+    dev: cpal::Device,
+    /// Desired configuration for the input stream.
+    cfg: cpal::StreamConfig,
+}
+
+impl AudioDevAndCfg {
+    /// Creates an instance. If no device is passed, it falls back to the default input
+    /// device of the system.
+    pub fn new(
+        preferred_dev: Option<cpal::Device>,
+        preferred_cfg: Option<cpal::StreamConfig>,
+    ) -> Self {
+        let dev = preferred_dev.unwrap_or_else(|| {
             let host = cpal::default_host();
-            let input_dev = host.default_input_device().unwrap_or_else(|| {
+            host.default_input_device().unwrap_or_else(|| {
                 panic!(
                     "No default audio input device found for host {}",
                     host.id().name()
                 )
-            });
-            (host, input_dev)
+            })
         });
+        let cfg = preferred_cfg.unwrap_or_else(|| dev.default_input_config().unwrap().config());
+        Self { dev, cfg }
+    }
 
-    println!(
-        "Using input device '{}' with audio backend '{:?}'",
-        input_dev
-            .name()
+    /// Getter for audio device.
+    pub const fn dev(&self) -> &cpal::Device {
+        &self.dev
+    }
+
+    /// Getter for audio input stream config.
+    pub const fn cfg(&self) -> &cpal::StreamConfig {
+        &self.cfg
+    }
+}
+
+impl Debug for AudioDevAndCfg {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AudioDevAndCfg")
+            .field(
+                "dev",
+                &self
+                    .dev
+                    .name()
+                    .as_ref()
+                    .map(|x| x.as_str())
+                    .unwrap_or("<unknown>"),
+            )
+            .field("cfg", &self.cfg)
+            .finish()
+    }
+}
+
+/// Sets up audio recording with the [`cpal`] library on the given audio input device.
+/// If no input device is given, it uses the default input device. Panics, if it not present.
+/// Returns the stream plus the chosen config for the device.
+///
+/// Appends all audio data to the ringbuffer `latest_audio_data`.
+///
+/// Works on Windows (WASAPI), Linux (ALSA) and MacOS (coreaudio).
+pub fn setup_audio_input_loop(
+    latest_audio_data: Arc<Mutex<AllocRingBuffer<f32>>>,
+    audio_dev_and_cfg: AudioDevAndCfg,
+) -> cpal::Stream {
+    let dev = audio_dev_and_cfg.dev();
+    let cfg = audio_dev_and_cfg.cfg();
+
+    eprintln!(
+        "Using input device '{}' with config: {:?}",
+        dev.name()
             .as_ref()
             .map(|x| x.as_str())
             .unwrap_or("<unknown>"),
-        host.id()
+        cfg
     );
 
-    let cfg = StreamConfig {
-        // I do only mono analysis here
-        channels: 1,
-        sample_rate: SampleRate(sampling_rate),
-        // the lower, the better. We store the data in a ringbuffer anyway.
-        // In practise, the buffer size received by the audio backend is variable
-        // (at least on ALSA) anyway.
-        buffer_size: get_buffersize(&host, &input_dev),
-    };
+    assert!(
+        cfg.channels == 1 || cfg.channels == 2,
+        "only supports Mono or Stereo channels!"
+    );
 
-    input_dev
+    if cfg.sample_rate.0 != 44100 && cfg.sample_rate.0 != 44800 {
+        eprintln!(
+            "WARN: sampling rate is {}, but the crate was only tested with 44,1/48khz.",
+            cfg.sample_rate.0
+        );
+    }
+
+    let is_mono = cfg.channels == 1;
+
+    let stream = dev
         .build_input_stream(
-            &cfg,
+            // This is not as easy as it might look. Even if the supported configs show, that a
+            // input device supports a given fixed buffer size, ALSA but also WASAPI tend to
+            // fail with unclear error messages. I found out, that using the default option is the
+            // only variant that is working on all platforms (Windows, Mac, Linux). The buffer
+            // size tends to be not as small as it would be optimal (for super low latency)
+            // but is still good enough (for example ~10ms on Windows) or ~6ms on ALSA (in my
+            // tests).
+            audio_dev_and_cfg.cfg(),
             // this is pretty cool by "cpal"; we can use u16, i16 or f32 and
-            // the type system does all the magic behind the scenes
+            // the type system does all the magic behind the scenes. f32 also works
+            // on Windows (WASAPI), MacOS (coreaudio), and Linux (ALSA).
             move |data: &[f32], _info| {
                 let mut audio_buf = latest_audio_data.lock().unwrap();
-                audio_buf.extend(data.iter().copied());
+                // Audio buffer only contains Mono data
+                if is_mono {
+                    audio_buf.extend(data.iter().copied());
+                } else {
+                    // interleaving for stereo is LRLR (de-facto standard?)
+                    audio_buf.extend(data.chunks_exact(2).map(|vals| (vals[0] + vals[1]) / 2.0))
+                }
             },
-            |_err| {},
+            |err| {
+                eprintln!("got stream error: {:#?}", err);
+            },
         )
-        .unwrap()
+        .unwrap();
+
+    stream
 }
 
 /// Lists all input devices for [`cpal`]. Can be used to select a device for
@@ -106,31 +177,6 @@ pub fn list_input_devs() -> Vec<(String, cpal::Device)> {
         .collect();
     devs.sort_by(|(n1, _), (n2, _)| n1.cmp(n2));
     devs
-}
-
-/// Determines a buffersize that works for the given hardware and the given audio backend.
-fn get_buffersize(host: &Host, dev: &Device) -> BufferSize {
-    // I noticed that at least some input devices on ALSA fail with "snd_pcm_hw_params_set_buffer_size",
-    // even if I'm sure that I set the correct buffer size. I don't know what's the problem..
-    //
-    // Quick and dirty solution: On Alsa always use "Default", which works..
-    if matches!(host.id(), HostId::Alsa) {
-        BufferSize::Default
-    } else {
-        // important that we don't choose a value that is too low for the hardware
-        let application_desired_buffer_size: FrameCount = 128;
-        let hw_desired_buffer_size = match dev.default_input_config().unwrap().buffer_size() {
-            SupportedBufferSize::Range { min, .. } => *min,
-            SupportedBufferSize::Unknown => application_desired_buffer_size,
-        };
-        let buffer_size = if hw_desired_buffer_size > application_desired_buffer_size {
-            hw_desired_buffer_size
-        } else {
-            application_desired_buffer_size
-        };
-
-        BufferSize::Fixed(buffer_size)
-    }
 }
 
 #[cfg(test)]

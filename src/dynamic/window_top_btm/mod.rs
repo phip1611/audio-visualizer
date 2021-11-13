@@ -26,11 +26,12 @@ SOFTWARE.
 //! diagram of transformed data, such as a lowpass filter or a a frequency spectrum.
 //!
 //! It uses the [`minifb`] crate to display GUI windows.
-use crate::dynamic::live_input::setup_audio_input_loop;
+use crate::dynamic::live_input::{setup_audio_input_loop, AudioDevAndCfg};
 use crate::dynamic::window_top_btm::visualize_minifb::{
     get_drawing_areas, setup_window, DEFAULT_H, DEFAULT_W,
 };
 use cpal::traits::StreamTrait;
+
 use minifb::Key;
 use plotters::chart::ChartContext;
 use plotters::coord::cartesian::Cartesian2d;
@@ -39,17 +40,12 @@ use plotters::prelude::BitMapBackend;
 use plotters::series::LineSeries;
 use plotters::style::{BLACK, CYAN};
 use plotters_bitmap::bitmap_pixel::BGRXPixel;
-use ringbuffer::{AllocRingBuffer, RingBufferExt};
+use ringbuffer::{AllocRingBuffer, RingBuffer, RingBufferExt};
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
-pub const SAMPLING_RATE: f64 = 44100.0;
-pub const TIME_PER_SAMPLE: f64 = 1.0 / SAMPLING_RATE;
-/// The number of latest samples that are kept for analysis in a ringbuffer.
-/// Must be a power (ringbuffer requirement).
-pub const AUDIO_SAMPLE_HISTORY_LEN: usize = (SAMPLING_RATE as usize * 5).next_power_of_two();
 /// Smooth refresh rate on 144 Hz displays.
 const REFRESH_RATE: f64 = 144.0;
 const REFRESH_S: f64 = 1.0 / REFRESH_RATE;
@@ -61,19 +57,23 @@ pub mod visualize_minifb;
 /// be transformed, and thus, how it should be displayed in the lower part of the window.
 ///
 /// The function is called every x milliseconds (refresh rate of window).
+///
+/// This works cross-platform (Windows, MacOS, Linux).
 #[allow(missing_debug_implementations)]
 pub enum TransformFn<'a> {
     /// Synchronized x-axis with the original data. Useful for transformations on the
     /// waveform, such as a (lowpass) filter.
     ///
     /// Functions takes amplitude values and transforms them to a new amplitude value.
-    Basic(fn(&[f32]) -> Vec<f32>),
+    /// It gets the sampling rate as second argument.
+    Basic(fn(&[f32], f32) -> Vec<f32>),
     /// Use this, when the x-axis is different than for the original data. For example,
     /// if you want to display a spectrum.
     ///
     /// Functions takes amplitude values (and their index) and transforms them to a new
     /// (x,y)-pair. Takes a closure instead of a function, so that it can capture state.
-    Complex(&'a dyn Fn(&[f32]) -> Vec<(f64, f64)>),
+    /// It gets the sampling rate as second argument.
+    Complex(&'a dyn Fn(&[f32], f32) -> Vec<(f64, f64)>),
 }
 
 /// Starts the audio recording via `cpal` on the given audio device (or the default input device),
@@ -95,7 +95,7 @@ pub enum TransformFn<'a> {
 ///                       If no value is present, the same value as for the upper diagram is used.
 /// - `x_desc` Description for the x-axis of the lower (=custom) diagram.
 /// - `y_desc` Description for the y-axis of the lower (=custom) diagram.
-/// - `preferred_input_dev` Preferred audio input device. If None, it uses the default input device.
+/// - `preferred_input_dev` See [`AudioDevAndCfg`].
 /// - `audio_data_transform_fn` See [`open_window_connect_audio`].
 #[allow(clippy::too_many_arguments)]
 pub fn open_window_connect_audio(
@@ -106,15 +106,16 @@ pub fn open_window_connect_audio(
     preferred_y_range: Option<Range<f64>>,
     x_desc: &str,
     y_desc: &str,
-    preferred_input_dev: Option<cpal::Device>,
+    input_dev_and_cfg: AudioDevAndCfg,
     audio_data_transform_fn: TransformFn,
 ) {
-    let latest_audio_data = init_ringbuffer();
-    let stream = setup_audio_input_loop(
-        latest_audio_data.clone(),
-        preferred_input_dev,
-        SAMPLING_RATE as u32,
-    );
+    let sample_rate = input_dev_and_cfg.cfg().sample_rate.0 as f32;
+    let latest_audio_data = init_ringbuffer(sample_rate as usize);
+    let audio_buffer_len = latest_audio_data.lock().unwrap().len();
+    let stream = setup_audio_input_loop(latest_audio_data.clone(), input_dev_and_cfg);
+    // This will be 1/44100 or 1/48000; the two most common sampling rates.
+    let time_per_sample = 1.0 / sample_rate as f64;
+
     // start recording; audio will be continuously stored in "latest_audio_data"
     stream.play().unwrap();
     let (mut window, top_cs, btm_cs, mut pixel_buf) = setup_window(
@@ -125,6 +126,8 @@ pub fn open_window_connect_audio(
         preferred_y_range,
         x_desc,
         y_desc,
+        audio_buffer_len,
+        time_per_sample,
     );
     window.limit_update_rate(Some(Duration::from_secs_f64(REFRESH_S)));
 
@@ -134,8 +137,11 @@ pub fn open_window_connect_audio(
             break;
         }
 
-        let (top_drawing_area, btm_drawing_area) =
-            get_drawing_areas(pixel_buf.borrow_mut(), DEFAULT_W, DEFAULT_H);
+        let (top_drawing_area, btm_drawing_area) = get_drawing_areas(
+            pixel_buf.borrow_mut(),
+            preferred_width.unwrap_or(DEFAULT_W),
+            preferred_height.unwrap_or(DEFAULT_H),
+        );
 
         let top_chart = top_cs.clone().restore(&top_drawing_area);
         let btm_chart = btm_cs.clone().restore(&btm_drawing_area);
@@ -146,12 +152,17 @@ pub fn open_window_connect_audio(
 
         // lock released immediately after oneliner
         let latest_audio_data = latest_audio_data.clone().lock().unwrap().to_vec();
-        fill_chart_waveform_over_time(top_chart, &latest_audio_data);
+        fill_chart_waveform_over_time(
+            top_chart,
+            &latest_audio_data,
+            time_per_sample,
+            audio_buffer_len,
+        );
         if let TransformFn::Basic(fnc) = audio_data_transform_fn {
-            let data = fnc(&latest_audio_data);
-            fill_chart_waveform_over_time(btm_chart, &data);
+            let data = fnc(&latest_audio_data, sample_rate);
+            fill_chart_waveform_over_time(btm_chart, &data, time_per_sample, audio_buffer_len);
         } else if let TransformFn::Complex(fnc) = audio_data_transform_fn {
-            let data = fnc(&latest_audio_data);
+            let data = fnc(&latest_audio_data, sample_rate);
             fill_chart_complex_fnc(btm_chart, data);
         } else {
             // required for compilation
@@ -169,15 +180,20 @@ pub fn open_window_connect_audio(
         // Update() also does the rate limiting/set the thread to sleep if not enough time
         //  sine the last refresh happened
         window
-            .update_with_buffer(pixel_buf.borrow(), DEFAULT_W, DEFAULT_H)
+            .update_with_buffer(
+                pixel_buf.borrow(),
+                preferred_width.unwrap_or(DEFAULT_W),
+                preferred_height.unwrap_or(DEFAULT_H),
+            )
             .unwrap();
     }
     stream.pause().unwrap();
 }
 
 /// Inits a ringbuffer on the heap and fills it with zeroes.
-fn init_ringbuffer() -> Arc<Mutex<AllocRingBuffer<f32>>> {
-    let mut buf = AllocRingBuffer::with_capacity(AUDIO_SAMPLE_HISTORY_LEN.next_power_of_two());
+fn init_ringbuffer(sampling_rate: usize) -> Arc<Mutex<AllocRingBuffer<f32>>> {
+    // Must be a power (ringbuffer requirement).
+    let mut buf = AllocRingBuffer::with_capacity((5 * sampling_rate).next_power_of_two());
     buf.fill(0.0);
     Arc::new(Mutex::new(buf))
 }
@@ -197,9 +213,11 @@ fn fill_chart_complex_fnc(
 fn fill_chart_waveform_over_time(
     mut chart: ChartContext<BitMapBackend<BGRXPixel>, Cartesian2d<RangedCoordf64, RangedCoordf64>>,
     audio_data: &[f32],
+    time_per_sample: f64,
+    audio_history_buf_len: usize,
 ) {
-    debug_assert_eq!(audio_data.len(), AUDIO_SAMPLE_HISTORY_LEN);
-    const TIMESHIFT: f64 = AUDIO_SAMPLE_HISTORY_LEN as f64 * TIME_PER_SAMPLE;
+    debug_assert_eq!(audio_data.len(), audio_history_buf_len);
+    let timeshift = audio_history_buf_len as f64 * time_per_sample;
 
     // calculate timestamp of each index (x coordinate)
     let data_iter = audio_data
@@ -212,7 +230,7 @@ fn fill_chart_waveform_over_time(
         // due to tests by me.
         .filter(|(i, _)| *i % 4 == 0)
         .map(|(i, amplitude)| {
-            let timestamp = TIME_PER_SAMPLE * (i as f64) - TIMESHIFT;
+            let timestamp = time_per_sample * (i as f64) - timeshift;
             // Values for amplitude in interval [-1.0; 1.0]
             (timestamp, (*amplitude) as f64)
         });
@@ -240,8 +258,8 @@ mod tests {
             None,
             "x-axis",
             "y-axis",
-            None,
-            TransformFn::Basic(|x| x.to_vec()),
+            AudioDevAndCfg::new(None, None),
+            TransformFn::Basic(|vals, _| vals.to_vec()),
         );
     }
 }

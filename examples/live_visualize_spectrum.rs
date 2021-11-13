@@ -21,9 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::list_input_devs;
+use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
 use audio_visualizer::dynamic::window_top_btm::{
-    open_window_connect_audio, TransformFn, SAMPLING_RATE,
+    open_window_connect_audio, TransformFn,
 };
 use cpal::traits::DeviceTrait;
 use spectrum_analyzer::scaling::divide_by_N;
@@ -42,7 +42,7 @@ fn main() {
     let visualize_spectrum: RefCell<Vec<(f64, f64)>> = RefCell::new(vec![(0.0, 0.0); 1024]);
 
     // Closure that captures `visualize_spectrum`.
-    let to_spectrum_fn = move |audio: &[f32]| {
+    let to_spectrum_fn = move |audio: &[f32], sampling_rate| {
         let skip_elements = audio.len() - 2048;
         // spectrum analysis only of the latest 46ms
         let relevant_samples = &audio[skip_elements..skip_elements + 2048];
@@ -51,10 +51,8 @@ fn main() {
         let hann_window = hann_window(relevant_samples);
         let latest_spectrum = samples_fft_to_spectrum(
             &hann_window,
-            SAMPLING_RATE as u32,
-            // everything below is totally irrelevant
-            // (and especially in logarithmic view annoying, because the range takes so much space)
-            FrequencyLimit::Min(20.0),
+            sampling_rate as u32,
+            FrequencyLimit::All,
             Some(&divide_by_N),
         )
         .unwrap();
@@ -70,7 +68,7 @@ fn main() {
                 *fr_old = fr_new.val() as f64;
                 let old_val = *fr_val_old * 0.84;
                 let max = max(
-                    fr_val_new.clone() * (5000.0 as f32).into(),
+                    *fr_val_new * 5000.0_f32.into(),
                     FrequencyValue::from(old_val as f32),
                 );
                 *fr_val_old = max.val() as f64;
@@ -89,7 +87,7 @@ fn main() {
         Some(0.0..500.0),
         "x-axis",
         "y-axis",
-        Some(in_dev),
+        AudioDevAndCfg::new(Some(in_dev), None),
         TransformFn::Complex(&to_spectrum_fn),
     );
 }
@@ -98,6 +96,9 @@ fn main() {
 fn select_input_dev() -> cpal::Device {
     let mut devs = list_input_devs();
     assert!(!devs.is_empty(), "no input devices found!");
+    if devs.len() == 1 {
+        return devs.remove(0).1;
+    }
     println!();
     devs.iter().enumerate().for_each(|(i, (name, dev))| {
         println!(

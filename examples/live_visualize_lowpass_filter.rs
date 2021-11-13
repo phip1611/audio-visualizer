@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::list_input_devs;
+use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
 use std::io::{stdin, BufRead};
@@ -38,14 +38,14 @@ fn main() {
         None,
         "time (seconds)",
         "Amplitude (with Lowpass filter)",
-        Some(in_dev),
+        AudioDevAndCfg::new(Some(in_dev), None),
         // lowpass filter
-        TransformFn::Basic(|x| {
+        TransformFn::Basic(|x, sampling_rate| {
             let mut data_f32 = x
                 .iter()
                 .map(|x| (*x * (i16::MAX) as f32) as i16)
                 .collect::<Vec<_>>();
-            lowpass_filter::simple::sp::apply_lpf_i16_sp(&mut data_f32, 44100, 80);
+            lowpass_filter::simple::sp::apply_lpf_i16_sp(&mut data_f32, sampling_rate as u16, 80);
             data_f32
                 .iter()
                 .map(|x| *x as f32)
@@ -59,6 +59,9 @@ fn main() {
 fn select_input_dev() -> cpal::Device {
     let mut devs = list_input_devs();
     assert!(!devs.is_empty(), "no input devices found!");
+    if devs.len() == 1 {
+        return devs.remove(0).1;
+    }
     println!();
     devs.iter().enumerate().for_each(|(i, (name, dev))| {
         println!(
