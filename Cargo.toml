@@ -28,6 +28,7 @@ plotters-bitmap = "0.3"
 [dev-dependencies]
 lowpass-filter = "0.2"
 spectrum-analyzer = "1.1"
+biquad = "0.4"
 
 # otherwise FFT and other code is too slow
 [profile.dev]
