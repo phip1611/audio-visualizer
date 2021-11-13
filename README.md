@@ -8,7 +8,7 @@ easily display your current audio data/waveform/spectrum and check if everything
 - **dynamic real-time audio**
     - [x] functionality to record audio and connect it with a GUI window
     - [x] side-by-side (top/btm) view of original waveform and custom view (e.g. spectrum or lowpass filter)
-
+    - [x] cross-platform (Windows with WASAPI, Linux with ALSA, MacOS with coreaudio)
 - **static waveform**
     - [x] very basic PNG output
     - [x] PNG output with basic axes/labels using https://crates.io/crates/plotters

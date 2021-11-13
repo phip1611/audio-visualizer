@@ -21,10 +21,8 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
-use audio_visualizer::dynamic::window_top_btm::{
-    open_window_connect_audio, TransformFn,
-};
+use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
+use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
 use spectrum_analyzer::scaling::divide_by_N;
 use spectrum_analyzer::windows::hann_window;

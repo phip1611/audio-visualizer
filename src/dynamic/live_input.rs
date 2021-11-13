@@ -27,9 +27,7 @@ SOFTWARE.
 //! It uses the [`cpal`] crate to record audio.
 
 use cpal::traits::{DeviceTrait, HostTrait};
-use cpal::{
-    Device,
-};
+use cpal::Device;
 use ringbuffer::AllocRingBuffer;
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
