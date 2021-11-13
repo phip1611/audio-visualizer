@@ -33,6 +33,6 @@ jobs:
       - name: Rustfmt (checks all source code/all features)
         run: cargo fmt -- --check
       - name: Clippy
-        run: cargo clippy
+        run: cargo clippy --all-targets
       - name: Rustdoc (default feature)
         run: cargo doc
