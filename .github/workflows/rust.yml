@@ -17,6 +17,7 @@ jobs:
           - 1.56.1 # MSRV
     steps:
       - uses: actions/checkout@v2
+      - run: sudo apt update && sudo apt install libasound2-dev libxkbcommon-dev -y
       - run: cargo build --all-targets
 
   style_checks:
@@ -27,6 +28,7 @@ jobs:
           - stable
     steps:
       - uses: actions/checkout@v2
+      - run: sudo apt update && sudo apt install libasound2-dev libxkbcommon-dev -y
       - name: Rustfmt (checks all source code/all features)
         run: cargo fmt -- --check
       - name: Clippy
