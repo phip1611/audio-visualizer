@@ -45,3 +45,7 @@ the frequency spectrum of the latest 46ms of audio. Frequencies <2000Hz are clea
 
 ## MSRV
 The MSRV is 1.56.1 stable.
+
+## Troubleshooting
+### Linux
+- make sure to have these required packages installed: `sudo apt install libasound2-dev libxkbcommon-dev`
