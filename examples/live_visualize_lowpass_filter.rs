@@ -24,6 +24,7 @@ SOFTWARE.
 use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
+use lowpass_filter::lowpass_filter;
 use std::io::{stdin, BufRead};
 
 /// Example that creates a live visualization of realtime audio data
@@ -41,16 +42,9 @@ fn main() {
         AudioDevAndCfg::new(Some(in_dev), None),
         // lowpass filter
         TransformFn::Basic(|x, sampling_rate| {
-            let mut data_f32 = x
-                .iter()
-                .map(|x| (*x * (i16::MAX) as f32) as i16)
-                .collect::<Vec<_>>();
-            lowpass_filter::simple::sp::apply_lpf_i16_sp(&mut data_f32, sampling_rate as u16, 80);
+            let mut data_f32 = x.iter().copied().collect::<Vec<_>>();
+            lowpass_filter(&mut data_f32, sampling_rate, 80.0);
             data_f32
-                .iter()
-                .map(|x| *x as f32)
-                .map(|x| x / i16::MAX as f32)
-                .collect()
         }),
     );
 }

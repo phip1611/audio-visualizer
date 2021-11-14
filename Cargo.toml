@@ -31,7 +31,7 @@ minifb = "0.19" # window
 
 [dev-dependencies]
 minimp3 = "0.5"
-lowpass-filter = "0.2"
+lowpass-filter = "0.3"
 spectrum-analyzer = "1.1"
 biquad = "0.4"
 
