@@ -30,7 +30,7 @@ On the top you see the original waveform of the song Holiday by Green Day. On th
 lowpass filter was applied. The beats are visible.
 
 ### Real-time audio + frequency spectrum (5.4MB GIF)
-![Example visualization of real-time audio + lowpass filter](res/live_demo_spectrum_green_day_holiday.gif "Example visualization of real-time audio + lowpass filter") \
+![Example visualization of real-time audio + spectrum analysis](res/live_demo_spectrum_green_day_holiday.gif "Example visualization of real-time audio + spectrum analysis") \
 On the top you see the original waveform of the song Holiday by Green Day. On the bottom you see
 the frequency spectrum of the latest 46ms of audio. Frequencies <2000Hz are clearly present.
 
