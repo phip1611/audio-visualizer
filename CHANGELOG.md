@@ -1,6 +1,9 @@
 # Changelog
 
-# v0.3.0
+# v0.3.1 (2021-11-16)
+- removed accidentally public export of internal module
+
+# v0.3.0 (2021-11-13)
 - MSRV is 1.56.1 stable (because of Rust edition 2021)
 - breaking changes: changed module paths
 - new functionality: live audio + GUI + customized view! see example: \

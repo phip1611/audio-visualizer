@@ -47,7 +47,7 @@ pub mod waveform;
 
 pub mod dynamic;
 #[cfg(test)]
-pub mod tests;
+mod tests;
 pub mod util;
 
 /// Describes the interleavement of audio data if
