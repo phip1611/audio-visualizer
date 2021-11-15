@@ -32,7 +32,7 @@ minifb = "0.19" # window
 [dev-dependencies]
 minimp3 = "0.5"
 lowpass-filter = "0.3"
-spectrum-analyzer = "1.1"
+spectrum-analyzer = "1.2"
 biquad = "0.4"
 
 # otherwise FFT and other code is too slow
