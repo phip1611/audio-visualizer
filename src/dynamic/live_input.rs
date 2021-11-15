@@ -139,6 +139,8 @@ pub fn setup_audio_input_loop(
             // this is pretty cool by "cpal"; we can use u16, i16 or f32 and
             // the type system does all the magic behind the scenes. f32 also works
             // on Windows (WASAPI), MacOS (coreaudio), and Linux (ALSA).
+            // TODO: I found out that we probably can't rely on the fact, that every audio input device
+            //  supports f32. I guess, I need to check this in the supported audio stream config too..
             move |data: &[f32], _info| {
                 let mut audio_buf = latest_audio_data.lock().unwrap();
                 // Audio buffer only contains Mono data
