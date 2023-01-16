@@ -68,10 +68,10 @@ fn select_input_dev() -> cpal::Device {
     println!();
     devs.iter().enumerate().for_each(|(i, (name, dev))| {
         println!(
-            "  [{}] {} {:?}",
+            "  [{}] {}",
             i,
             name,
-            dev.supported_input_configs().unwrap().collect::<Vec<_>>()
+            // dev.supported_input_configs().unwrap().collect::<Vec<_>>()
         );
     });
     let mut input = String::new();

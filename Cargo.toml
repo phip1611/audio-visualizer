@@ -27,7 +27,7 @@ plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
 plotters-bitmap = "0.3"
 ringbuffer = "0.8"
 cpal = "0.13"
-minifb = "0.19" # window
+minifb = "0.22" # gui window
 
 [dev-dependencies]
 minimp3 = "0.5"
