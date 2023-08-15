@@ -23,7 +23,7 @@ exclude = [
 [dependencies]
 png = "0.17"
 # faster compilation: remove unnecessary features
-plotters = { version = "0.3", default-features = false, features = ["bitmap_backend", "line_series"] }
+plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
 plotters-bitmap = "0.3"
 ringbuffer = "0.8"
 cpal = "0.13"
