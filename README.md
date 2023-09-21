@@ -44,7 +44,7 @@ the frequency spectrum of the latest 46ms of audio. Frequencies <2000Hz are clea
 ![Example visualization of a spectrum (0-140hz)](plotters_spectrum_example.png "Example visualization of a spectrum (0-140hz)")
 
 ## MSRV
-The MSRV is 1.57 stable.
+The MSRV is 1.63.0 stable.
 
 ## Troubleshooting
 ### Linux

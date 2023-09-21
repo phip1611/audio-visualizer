@@ -1,7 +1,7 @@
 # Changelog
 
 # v0.4.0 (2023-09-21)
-- **BREAKING** MSRV is 1.57
+- **BREAKING** MSRV is 1.63.0
 - build fix
 - dependency bumps
 
