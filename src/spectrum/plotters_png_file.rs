@@ -45,17 +45,14 @@ pub fn spectrum_static_plotters_png_visualize(
         700
     };
 
-    let root = BitMapBackend::new(&path, (width as u32, height)).into_drawing_area();
+    let root = BitMapBackend::new(&path, (width, height)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let mut chart = ChartBuilder::on(&root)
         .caption("y=f magnitudes of sample", ("sans-serif", 20).into_font())
         .margin(5)
         .x_label_area_size(60)
         .y_label_area_size(60)
-        .build_cartesian_2d(
-            0.0..(max_frequency as f32), /*.log10()*/
-            0.0..max as f32,
-        )
+        .build_cartesian_2d(0.0..(max_frequency as f32) /*.log10()*/, 0.0..max)
         .unwrap();
 
     chart.configure_mesh().draw().unwrap();
@@ -65,18 +62,17 @@ pub fn spectrum_static_plotters_png_visualize(
             // (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
             frequency_spectrum
                 .iter()
-                .into_iter()
                 .map(|(frequency, magnitude)| ((*frequency as f32) /*.log10()*/, *magnitude)),
             &RED,
         ))
         .unwrap()
         .label("frequency magnitude")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
 
     chart
         .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
+        .background_style(WHITE.mix(0.8))
+        .border_style(BLACK)
         .draw()
         .unwrap();
 }

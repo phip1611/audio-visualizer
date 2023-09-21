@@ -34,6 +34,7 @@ fn main() {
                 println!("got data: {} samples", data.len());
             },
             |_e| {},
+            None,
         )
         .unwrap();
     stream.play().unwrap();

@@ -24,7 +24,6 @@ SOFTWARE.
 use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type, Q_BUTTERWORTH_F32};
-use cpal::traits::DeviceTrait;
 use std::io::{stdin, BufRead};
 
 /// Example that creates a live visualization of realtime audio data
@@ -66,16 +65,16 @@ fn select_input_dev() -> cpal::Device {
         return devs.remove(0).1;
     }
     println!();
-    devs.iter().enumerate().for_each(|(i, (name, dev))| {
+    devs.iter().enumerate().for_each(|(i, (name, _dev))| {
         println!(
-            "  [{}] {} {:?}",
+            "  [{}] {}",
             i,
             name,
-            dev.supported_input_configs().unwrap().collect::<Vec<_>>()
+            // dev.supported_input_configs().unwrap().collect::<Vec<_>>()
         );
     });
     let mut input = String::new();
     stdin().lock().read_line(&mut input).unwrap();
-    let index = (&input[0..1]).parse::<usize>().unwrap();
+    let index = input[0..1].parse::<usize>().unwrap();
     devs.remove(index).1
 }

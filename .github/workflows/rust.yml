@@ -1,7 +1,7 @@
 name: Build
 
 # Triggers the workflow on push or pull request events (for any branch in a repository)
-on: [ push, pull_request ]
+on: [ push, pull_request, merge_group ]
 
 env:
   CARGO_TERM_COLOR: always
@@ -14,16 +14,13 @@ jobs:
         rust:
           - stable
           - nightly
-          - 1.56.1 # MSRV
+          - 1.63.0 # MSRV
     steps:
       - uses: actions/checkout@v2
-        # Important preparation step: override the latest default Rust version in GitHub CI
-        # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: default
           toolchain: ${{ matrix.rust }}
-          override: true
       - run: sudo apt update && sudo apt install libasound2-dev libxkbcommon-dev -y
       - run: cargo build --all-targets
       - run: cargo test
@@ -36,13 +33,11 @@ jobs:
           - stable
     steps:
       - uses: actions/checkout@v2
-        # Important preparation step: override the latest default Rust version in GitHub CI
-        # with the current value of the iteration in the "strategy.matrix.rust"-array.
-      - uses: actions-rs/toolchain@v1
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: default
           toolchain: ${{ matrix.rust }}
-          override: true
+          components: clippy, rustfmt
       - run: sudo apt update && sudo apt install libasound2-dev libxkbcommon-dev -y
       - name: Rustfmt (checks all source code/all features)
         run: cargo fmt -- --check

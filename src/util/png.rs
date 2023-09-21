@@ -30,7 +30,7 @@ pub fn write_png_file_u8(file: &Path, rgb_data: &[u8], image_width: u32, image_h
     let file = File::create(file).unwrap();
     let mut writer = BufWriter::new(file);
 
-    let mut encoder = png::Encoder::new(&mut writer, image_width as u32, image_height as u32);
+    let mut encoder = png::Encoder::new(&mut writer, image_width, image_height);
     encoder.set_color(png::ColorType::Rgb);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header().unwrap();

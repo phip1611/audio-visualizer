@@ -24,55 +24,57 @@ SOFTWARE.
 use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
-use spectrum_analyzer::scaling::divide_by_N;
-use spectrum_analyzer::windows::hann_window;
-use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, FrequencyValue};
-use std::cell::RefCell;
-use std::cmp::max;
+use ringbuffer::{AllocRingBuffer, RingBuffer};
+use std::cell::{Cell, RefCell};
 use std::io::{stdin, BufRead};
+use std::time::Instant;
 
-/// Example that creates a live visualization of the frequency spectrum of realtime audio data
+/// Example that creates a live visualization of the audio signal power of realtime audio data
 /// **Execute this with `--release`, otherwise it is very laggy!**.
 fn main() {
-    // Contains the data for the spectrum to be visualized. It contains ordered pairs of
-    // `(frequency, frequency_value)`. During each iteration, the frequency value gets
-    // combined with `max(old_value * smoothing_factor, new_value)`.
-    let visualize_spectrum: RefCell<Vec<(f64, f64)>> = RefCell::new(vec![(0.0, 0.0); 1024]);
+    let epoch = Cell::new(Instant::now());
+
+    let power_history: RefCell<AllocRingBuffer<(f64, f64)>> =
+        RefCell::new(AllocRingBuffer::new(2_usize.pow(12)));
 
     // Closure that captures `visualize_spectrum`.
-    let to_spectrum_fn = move |audio: &[f32], sampling_rate| {
-        let skip_elements = audio.len() - 2048;
+    let to_power_fn = move |audio: &[f32], _sampling_rate: f32| {
+        let elapsed_s = epoch.get().elapsed().as_secs_f64();
+
+        // equals 11.6ms with 44.1kHz sampling rate or 10.7ms with 48kHz sampling rate.
+        const NUM_SAMPLES: usize = 256;
+        let skip_elements = audio.len() - NUM_SAMPLES;
         // spectrum analysis only of the latest 46ms
-        let relevant_samples = &audio[skip_elements..skip_elements + 2048];
+        let relevant_samples = &audio[skip_elements..];
 
-        // do FFT
-        let hann_window = hann_window(relevant_samples);
-        let latest_spectrum = samples_fft_to_spectrum(
-            &hann_window,
-            sampling_rate as u32,
-            FrequencyLimit::All,
-            Some(&divide_by_N),
-        )
-        .unwrap();
-
-        // now smoothen the spectrum; old values are decreased a bit and replaced,
-        // if the new value is higher
-        latest_spectrum
-            .data()
+        let power_sum = relevant_samples
             .iter()
-            .zip(visualize_spectrum.borrow_mut().iter_mut())
-            .for_each(|((fr_new, fr_val_new), (fr_old, fr_val_old))| {
-                // actually only required in very first iteration
-                *fr_old = fr_new.val() as f64;
-                let old_val = *fr_val_old * 0.84;
-                let max = max(
-                    *fr_val_new * 5000.0_f32.into(),
-                    FrequencyValue::from(old_val as f32),
-                );
-                *fr_val_old = max.val() as f64;
-            });
+            .copied()
+            .map(|x| x * x)
+            .fold(0.0, |acc, val| acc + val as f64);
+        let power = power_sum / relevant_samples.len() as f64;
 
-        visualize_spectrum.borrow().clone()
+        let mut power_history = power_history.borrow_mut();
+        let mut power_history_vec = power_history.to_vec();
+        power_history_vec.iter_mut().for_each(|(time, _val)| {
+            *time -= elapsed_s;
+        });
+        power_history_vec.push((0.0 - 0.01, power));
+        power_history.extend(power_history_vec.clone());
+        /*loop {
+            match power_history.iter_mut().next() {
+                None => break,
+                Some((time, _val)) => {
+                    dbg!("WAH");
+                    *time -= elapsed_s;
+                }
+            }
+        }
+        dbg!("WAH");
+        power_history.push((0.0, power));*/
+
+        epoch.replace(Instant::now());
+        power_history_vec
     };
 
     let in_dev = select_input_dev();
@@ -81,12 +83,12 @@ fn main() {
         None,
         None,
         // 0.0..22050.0_f64.log(100.0),
-        Some(0.0..22050.0),
-        Some(0.0..500.0),
+        Some(-5.9..0.0),
+        Some(0.0..0.25),
         "x-axis",
         "y-axis",
         AudioDevAndCfg::new(Some(in_dev), None),
-        TransformFn::Complex(&to_spectrum_fn),
+        TransformFn::Complex(&to_power_fn),
     );
 }
 

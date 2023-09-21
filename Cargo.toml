@@ -5,7 +5,7 @@ Smple audio visualization library which is especially useful for developers to v
 samples, e.g. by waveform or spectrum. (So far) this library is not capable of doing nice visualizations
 for end users.
 """
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2021"
 keywords = ["audio", "visualizer", "waveform", "spectrum"]
@@ -23,17 +23,17 @@ exclude = [
 [dependencies]
 png = "0.17"
 # faster compilation: remove unnecessary features
-plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
-plotters-bitmap = "0.3"
-ringbuffer = "0.8"
-cpal = "0.13"
-minifb = "0.19" # window
+plotters = { version = "0.3.5", features = ["bitmap_backend", "line_series"] }
+plotters-bitmap = "0.3.3"
+ringbuffer = "0.15.0"
+cpal = "0.15.2"
+minifb = "0.25.0" # gui window
 
 [dev-dependencies]
-minimp3 = "0.5"
-lowpass-filter = "0.3"
-spectrum-analyzer = "1.2"
-biquad = "0.4"
+minimp3 = "0.5.1"
+lowpass-filter = "0.3.2"
+spectrum-analyzer = "1.4.0"
+biquad = "0.4.2"
 
 # otherwise FFT and other code is too slow
 [profile.dev]

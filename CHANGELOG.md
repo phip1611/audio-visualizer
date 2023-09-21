@@ -1,5 +1,10 @@
 # Changelog
 
+# v0.4.0 (2023-09-21)
+- **BREAKING** MSRV is 1.63.0
+- build fix
+- dependency bumps
+
 # v0.3.1 (2021-11-16)
 - removed accidentally public export of internal module
 

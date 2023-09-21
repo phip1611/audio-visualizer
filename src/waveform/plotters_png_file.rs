@@ -72,7 +72,7 @@ pub fn waveform_static_plotters_png_visualize(
 
     let width = (samples.len() / 5) as u32;
     let width = if width > 4000 { 4000 } else { width };
-    let root = BitMapBackend::new(&path, (width as u32, 1000)).into_drawing_area();
+    let root = BitMapBackend::new(&path, (width, 1000)).into_drawing_area();
     root.fill(&WHITE).unwrap();
     let mut chart = ChartBuilder::on(&root)
         .caption("y=music(t)", ("sans-serif", 50).into_font())
@@ -89,19 +89,18 @@ pub fn waveform_static_plotters_png_visualize(
             // (-50..=50).map(|x| x as f32 / 50.0).map(|x| (x, x * x)),
             samples
                 .iter()
-                .into_iter()
                 .enumerate()
                 .map(|(sample_i, amplitude)| (sample_i as f32, *amplitude as f32)),
             &RED,
         ))
         .unwrap()
         // .label("y = music(t)")
-        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], &RED));
+        .legend(|(x, y)| PathElement::new(vec![(x, y), (x + 20, y)], RED));
 
     chart
         .configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
+        .background_style(WHITE.mix(0.8))
+        .border_style(BLACK)
         .draw()
         .unwrap();
 }

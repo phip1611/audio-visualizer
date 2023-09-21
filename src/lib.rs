@@ -63,10 +63,10 @@ pub enum ChannelInterleavement {
 
 impl ChannelInterleavement {
     pub const fn is_lrlr(&self) -> bool {
-        matches!(self, ChannelInterleavement::LRLR)
+        matches!(self, Self::LRLR)
     }
     pub const fn is_lllrr(&self) -> bool {
-        matches!(self, ChannelInterleavement::LLRR)
+        matches!(self, Self::LLRR)
     }
     /// Transforms the interleaved data into two vectors.
     /// Returns a tuple. First/left value is left channel, second/right value is right channel.
@@ -107,16 +107,16 @@ pub enum Channels {
 
 impl Channels {
     pub const fn is_mono(&self) -> bool {
-        matches!(self, Channels::Mono)
+        matches!(self, Self::Mono)
     }
 
     pub const fn is_stereo(&self) -> bool {
-        matches!(self, Channels::Stereo(_))
+        matches!(self, Self::Stereo(_))
     }
 
     pub fn stereo_interleavement(&self) -> ChannelInterleavement {
         match self {
-            Channels::Stereo(interleavmement) => *interleavmement,
+            Self::Stereo(interleavmement) => *interleavmement,
             _ => panic!("Not stereo"),
         }
     }
