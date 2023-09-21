@@ -168,7 +168,7 @@ fn draw_chart<'a>(
         .y_desc(y_desc)
         .x_labels(10)
         .y_labels(10)
-        .axis_style(&WHITE)
+        .axis_style(WHITE)
         .draw()
         .unwrap();
 

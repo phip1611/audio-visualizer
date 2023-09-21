@@ -24,12 +24,8 @@ SOFTWARE.
 use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
-use ringbuffer::{AllocRingBuffer, RingBufferExt, RingBufferWrite};
-use spectrum_analyzer::scaling::divide_by_N;
-use spectrum_analyzer::windows::hann_window;
-use spectrum_analyzer::{samples_fft_to_spectrum, FrequencyLimit, FrequencyValue};
+use ringbuffer::{AllocRingBuffer, RingBufferExt};
 use std::cell::{Cell, RefCell};
-use std::cmp::max;
 use std::io::{stdin, BufRead};
 use std::time::Instant;
 
@@ -42,7 +38,7 @@ fn main() {
         RefCell::new(AllocRingBuffer::with_capacity(2_usize.pow(12)));
 
     // Closure that captures `visualize_spectrum`.
-    let to_power_fn = move |audio: &[f32], sampling_rate: f32| {
+    let to_power_fn = move |audio: &[f32], _sampling_rate: f32| {
         let elapsed_s = epoch.get().elapsed().as_secs_f64();
 
         // equals 11.6ms with 44.1kHz sampling rate or 10.7ms with 48kHz sampling rate.
@@ -114,6 +110,6 @@ fn select_input_dev() -> cpal::Device {
     });
     let mut input = String::new();
     stdin().lock().read_line(&mut input).unwrap();
-    let index = (&input[0..1]).parse::<usize>().unwrap();
+    let index = input[0..1].parse::<usize>().unwrap();
     devs.remove(index).1
 }

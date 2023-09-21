@@ -42,7 +42,7 @@ fn main() {
         AudioDevAndCfg::new(Some(in_dev), None),
         // lowpass filter
         TransformFn::Basic(|x, sampling_rate| {
-            let mut data_f32 = x.iter().copied().collect::<Vec<_>>();
+            let mut data_f32 = x.to_vec();
             lowpass_filter(&mut data_f32, sampling_rate, 80.0);
             data_f32
         }),
@@ -67,6 +67,6 @@ fn select_input_dev() -> cpal::Device {
     });
     let mut input = String::new();
     stdin().lock().read_line(&mut input).unwrap();
-    let index = (&input[0..1]).parse::<usize>().unwrap();
+    let index = input[0..1].parse::<usize>().unwrap();
     devs.remove(index).1
 }

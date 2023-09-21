@@ -73,6 +73,7 @@ pub enum TransformFn<'a> {
     /// Functions takes amplitude values (and their index) and transforms them to a new
     /// (x,y)-pair. Takes a closure instead of a function, so that it can capture state.
     /// It gets the sampling rate as second argument.
+    #[allow(clippy::complexity)]
     Complex(&'a dyn Fn(&[f32], f32) -> Vec<(f64, f64)>),
 }
 
@@ -205,7 +206,7 @@ fn fill_chart_complex_fnc(
 ) {
     // dedicated function; otherwise lifetime problems/compiler errors
     chart
-        .draw_series(LineSeries::new(audio_data.into_iter(), &CYAN))
+        .draw_series(LineSeries::new(audio_data, &CYAN))
         .unwrap();
 }
 

@@ -108,6 +108,6 @@ fn select_input_dev() -> cpal::Device {
     });
     let mut input = String::new();
     stdin().lock().read_line(&mut input).unwrap();
-    let index = (&input[0..1]).parse::<usize>().unwrap();
+    let index = input[0..1].parse::<usize>().unwrap();
     devs.remove(index).1
 }
