@@ -58,7 +58,6 @@ fn main() {
             .fold(0.0, |acc, val| acc + val as f64);
         let power = power_sum / relevant_samples.len() as f64;
 
-
         let mut power_history = power_history.borrow_mut();
         let mut power_history_vec = power_history.to_vec();
         power_history_vec.iter_mut().for_each(|(time, _val)| {
@@ -77,7 +76,6 @@ fn main() {
         }
         dbg!("WAH");
         power_history.push((0.0, power));*/
-
 
         epoch.replace(Instant::now());
         power_history_vec
