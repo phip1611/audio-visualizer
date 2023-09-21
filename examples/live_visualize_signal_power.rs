@@ -24,7 +24,7 @@ SOFTWARE.
 use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
 use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
 use cpal::traits::DeviceTrait;
-use ringbuffer::{AllocRingBuffer, RingBufferExt};
+use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::cell::{Cell, RefCell};
 use std::io::{stdin, BufRead};
 use std::time::Instant;
@@ -35,7 +35,7 @@ fn main() {
     let epoch = Cell::new(Instant::now());
 
     let power_history: RefCell<AllocRingBuffer<(f64, f64)>> =
-        RefCell::new(AllocRingBuffer::with_capacity(2_usize.pow(12)));
+        RefCell::new(AllocRingBuffer::new(2_usize.pow(12)));
 
     // Closure that captures `visualize_spectrum`.
     let to_power_fn = move |audio: &[f32], _sampling_rate: f32| {

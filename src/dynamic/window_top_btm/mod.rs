@@ -40,7 +40,7 @@ use plotters::prelude::BitMapBackend;
 use plotters::series::LineSeries;
 use plotters::style::{BLACK, CYAN};
 use plotters_bitmap::bitmap_pixel::BGRXPixel;
-use ringbuffer::{AllocRingBuffer, RingBuffer, RingBufferExt};
+use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
@@ -194,7 +194,7 @@ pub fn open_window_connect_audio(
 /// Inits a ringbuffer on the heap and fills it with zeroes.
 fn init_ringbuffer(sampling_rate: usize) -> Arc<Mutex<AllocRingBuffer<f32>>> {
     // Must be a power (ringbuffer requirement).
-    let mut buf = AllocRingBuffer::with_capacity((5 * sampling_rate).next_power_of_two());
+    let mut buf = AllocRingBuffer::new((5 * sampling_rate).next_power_of_two());
     buf.fill(0.0);
     Arc::new(Mutex::new(buf))
 }

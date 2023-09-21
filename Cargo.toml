@@ -25,8 +25,8 @@ png = "0.17"
 # faster compilation: remove unnecessary features
 plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
 plotters-bitmap = "0.3"
-ringbuffer = "~0.8"
-cpal = "~0.14"
+ringbuffer = "0.15.0"
+cpal = "0.15"
 minifb = "0.25" # gui window
 
 [dev-dependencies]
