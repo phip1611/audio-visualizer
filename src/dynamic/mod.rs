@@ -22,12 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//! Module provides functions to dynamically get audio input (e.g. from mic) and
-//! to display the recorded audio side-by-side with a transformation of the audio
-//! data, such as a lowpass filter or a frequency spectrum.
+//! Module provides functions to dynamically get audio input (e.g. from mic).
 //!
-//! **Its recommended to execute all functions here only with `--release`-flag. Otherwise
-//! the demo might run really slow.
+//! Further, it provides functionality to display the recorded audio
+//! side-by-side with a transformation of the audio data, such as a lowpass
+//! filter or a frequency spectrum.
+//!
+//! **Its recommended to execute all functions here only with `--release`-flag.
+//! Otherwise, the demo might run really slowly.
 
 pub mod live_input;
 pub mod window_top_btm;

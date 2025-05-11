@@ -42,6 +42,7 @@ pub const DEFAULT_W: usize = 1280;
 pub const DEFAULT_H: usize = 720;
 
 /// Initializes the [`minifb`] window and draws the initial grid into it.
+///
 /// It splits the drawing area into an upper chart and a lower chart. The
 /// upper exists to show original audio data. The lower exists to show transformed
 /// audio data, e.g. spectrum or lowpass filter.

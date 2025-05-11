@@ -90,6 +90,7 @@ impl Debug for AudioDevAndCfg {
 }
 
 /// Sets up audio recording with the [`cpal`] library on the given audio input device.
+///
 /// If no input device is given, it uses the default input device. Panics, if it not present.
 /// Returns the stream plus the chosen config for the device.
 ///

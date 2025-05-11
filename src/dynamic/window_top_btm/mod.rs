@@ -21,9 +21,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! This module provides the functionality to display a GUI window, where the upper
-//! half shows the real-time recorded audio data whereas the lower half shows a
-//! diagram of transformed data, such as a lowpass filter or a a frequency spectrum.
+//! This module provides the functionality to display a GUI window.
+//!
+//! In the window, the upper half shows the real-time recorded audio data
+//! whereas the lower half shows a diagram of transformed data, such as a
+//! lowpass filter or a frequency spectrum.
 //!
 //! It uses the [`minifb`] crate to display GUI windows.
 use crate::dynamic::live_input::{setup_audio_input_loop, AudioDevAndCfg};
@@ -44,11 +46,6 @@ use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::Range;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
-
-/// Smooth refresh rate on 144 Hz displays.
-const REFRESH_RATE: f64 = 144.0;
-const REFRESH_S: f64 = 1.0 / REFRESH_RATE;
 
 pub mod pixel_buf;
 pub mod visualize_minifb;
@@ -78,7 +75,9 @@ pub enum TransformFn<'a> {
 }
 
 /// Starts the audio recording via `cpal` on the given audio device (or the default input device),
-/// opens a GUI window and displays two graphs. The upper graph is the latest audio input as
+/// opens a GUI window and displays two graphs.
+///
+/// The upper graph is the latest audio input as
 /// wave form (live/real time). The lower graph can be customized, to show for example a
 /// spectrum or the lowpassed data.
 ///
@@ -130,7 +129,7 @@ pub fn open_window_connect_audio(
         audio_buffer_len,
         time_per_sample,
     );
-    window.limit_update_rate(Some(Duration::from_secs_f64(REFRESH_S)));
+    window.set_target_fps(144);
 
     // GUI refresh loop; CPU-limited by "window.limit_update_rate"
     while window.is_open() {

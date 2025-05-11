@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 //! Module for several frequency spectrum visualization implementations.
+//!
 //! This module focuses on static visualization. For dynamic visualization,
 //! look into the [`crate::dynamic`] module + corresponding examples in `examples/`.
 

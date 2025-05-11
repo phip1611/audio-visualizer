@@ -37,7 +37,8 @@ SOFTWARE.
 #![allow(
     clippy::suboptimal_flops,
     clippy::redundant_pub_crate,
-    clippy::fallible_impl_from
+    clippy::fallible_impl_from,
+    clippy::multiple_crate_versions
 )]
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]

@@ -37,4 +37,4 @@ symphonia = { version = "0.5.4", default-features = false, features = ["mp3"] }
 
 # otherwise FFT and other code is too slow
 [profile.dev]
-#opt-level = 1
+opt-level = 1
