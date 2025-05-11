@@ -25,9 +25,11 @@ SOFTWARE.
 
 use crate::util::png::write_png_file_rgb_tuples;
 use crate::Channels;
+use std::fs;
 use std::path::PathBuf;
 
 /// Visualizes audio as a waveform in a png file in the most simple way.
+///
 /// There are no axes. If the audio data is mono, it creates one file.
 /// If the data is stereo, it creates two files (with "left_" and "right_" prefix).
 pub fn waveform_static_png_visualize(
@@ -63,7 +65,7 @@ pub fn waveform_static_png_visualize(
     // needed for offset calculation; width per sample
     let width_per_sample = image_width as f64 / samples.len() as f64;
     // height in pixel per possible value of a sample; counts in that the y axis lays in the middle
-    let height_per_max_amplitude = image_height as f64 / 2_f64 / i16::max_value() as f64;
+    let height_per_max_amplitude = image_height as f64 / 2_f64 / i16::MAX as f64;
 
     // RGB image data
     let mut image = vec![vec![(255, 255, 255); image_width]; image_height];
@@ -83,6 +85,9 @@ pub fn waveform_static_png_visualize(
         image[y][x] = (0, 0, 0);
     }
 
+    if !fs::exists(directory).unwrap() {
+        fs::create_dir(directory).unwrap();
+    }
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);
@@ -92,10 +97,8 @@ pub fn waveform_static_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
+    use crate::tests::testutil::{decode_mp3, TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
-    use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
-    use std::fs::File;
 
     /// This test works, if it doesn't panic.
     #[test]
@@ -114,23 +117,8 @@ mod tests {
         let mut path = PathBuf::new();
         path.push(TEST_SAMPLES_DIR);
         path.push("sample_1.mp3");
-        let mut decoder = Mp3Decoder::new(File::open(path).unwrap());
 
-        let mut lrlr_mp3_samples = vec![];
-        loop {
-            match decoder.next_frame() {
-                Ok(Mp3Frame {
-                    data: samples_of_frame,
-                    ..
-                }) => {
-                    for sample in samples_of_frame {
-                        lrlr_mp3_samples.push(sample);
-                    }
-                }
-                Err(Mp3Error::Eof) => break,
-                Err(e) => panic!("{:?}", e),
-            }
-        }
+        let lrlr_mp3_samples = decode_mp3(path.as_path());
 
         waveform_static_png_visualize(
             &lrlr_mp3_samples,

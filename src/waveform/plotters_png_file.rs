@@ -25,6 +25,7 @@ SOFTWARE.
 
 use crate::Channels;
 use plotters::prelude::*;
+use std::fs;
 use std::path::PathBuf;
 
 /// Visualizes audio as a waveform in a png file using "plotters" crate.
@@ -57,6 +58,9 @@ pub fn waveform_static_plotters_png_visualize(
         return;
     }
 
+    if !fs::exists(directory).unwrap() {
+        fs::create_dir(directory).unwrap();
+    }
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);
@@ -108,33 +112,16 @@ pub fn waveform_static_plotters_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR};
+    use crate::tests::testutil::{decode_mp3, TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
-    use minimp3::{Decoder as Mp3Decoder, Error as Mp3Error, Frame as Mp3Frame};
-    use std::fs::File;
 
     #[test]
     fn test_visualize_png_output() {
         let mut path = PathBuf::new();
         path.push(TEST_SAMPLES_DIR);
         path.push("sample_1.mp3");
-        let mut decoder = Mp3Decoder::new(File::open(path).unwrap());
 
-        let mut lrlr_mp3_samples = vec![];
-        loop {
-            match decoder.next_frame() {
-                Ok(Mp3Frame {
-                    data: samples_of_frame,
-                    ..
-                }) => {
-                    for sample in samples_of_frame {
-                        lrlr_mp3_samples.push(sample);
-                    }
-                }
-                Err(Mp3Error::Eof) => break,
-                Err(e) => panic!("{:?}", e),
-            }
-        }
+        let lrlr_mp3_samples = decode_mp3(path.as_path());
 
         waveform_static_plotters_png_visualize(
             &lrlr_mp3_samples,

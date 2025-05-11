@@ -2,6 +2,7 @@
 
 use crate::util::png::write_png_file_rgb_tuples;
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
 
 pub fn spectrum_static_png_visualize(
@@ -54,6 +55,9 @@ pub fn spectrum_static_png_visualize(
         }
     }
 
+    if !fs::exists(directory).unwrap() {
+        fs::create_dir(directory).unwrap();
+    }
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);

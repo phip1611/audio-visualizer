@@ -22,6 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 //! Module for several waveform visualization implementations.
+//!
 //! This module focuses on static visualization. For dynamic visualization,
 //! look into the [`crate::dynamic`] module + corresponding examples in `examples/`.
 

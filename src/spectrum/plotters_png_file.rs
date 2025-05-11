@@ -2,6 +2,7 @@
 
 use plotters::prelude::*;
 use std::collections::BTreeMap;
+use std::fs;
 use std::path::PathBuf;
 
 pub fn spectrum_static_plotters_png_visualize(
@@ -30,6 +31,9 @@ pub fn spectrum_static_plotters_png_visualize(
         .unwrap()
         .0;
 
+    if !fs::exists(directory).unwrap() {
+        fs::create_dir(directory).unwrap();
+    }
     let mut path = PathBuf::new();
     path.push(directory);
     path.push(filename);
@@ -81,7 +85,6 @@ pub fn spectrum_static_plotters_png_visualize(
 mod tests {
     use super::*;
     use crate::tests::testutil::TEST_OUT_DIR;
-    use std::f32::NAN;
 
     #[test]
     fn test_visualize_sine_waves_spectrum_plotters() {
@@ -115,7 +118,7 @@ mod tests {
     #[should_panic]
     fn test_panic_on_NAN() {
         let mut spectrum = BTreeMap::new();
-        spectrum.insert(0, NAN);
+        spectrum.insert(0, f32::NAN);
 
         spectrum_static_plotters_png_visualize(
             &spectrum,
