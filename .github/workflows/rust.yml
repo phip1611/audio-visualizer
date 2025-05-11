@@ -21,6 +21,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@v2
       - run: sudo apt update && sudo apt install pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev -y
       - run: cargo build --all-targets
       - run: cargo test
@@ -38,6 +39,7 @@ jobs:
         with:
           toolchain: ${{ matrix.rust }}
           components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
       - run: sudo apt update && sudo apt install pkg-config libfontconfig-dev libasound2-dev libxkbcommon-dev -y
       - name: Rustfmt (checks all source code/all features)
         run: cargo fmt -- --check
