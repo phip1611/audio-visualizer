@@ -90,9 +90,9 @@ pub enum TransformFn<'a> {
 /// - `preferred_height` Preferred height of GUI window. Default is [`DEFAULT_H`].
 /// - `preferred_width` Preferred height of GUI window. Default is [`DEFAULT_W`].
 /// - `preferred_x_range` Preferred range for the x-axis of the lower (=custom) diagram.
-///                       If no value is present, the same value as for the upper diagram is used.
+///   If no value is present, the same value as for the upper diagram is used.
 /// - `preferred_y_range` Preferred range for the y-axis of the lower (=custom) diagram.
-///                       If no value is present, the same value as for the upper diagram is used.
+///   If no value is present, the same value as for the upper diagram is used.
 /// - `x_desc` Description for the x-axis of the lower (=custom) diagram.
 /// - `y_desc` Description for the y-axis of the lower (=custom) diagram.
 /// - `preferred_input_dev` See [`AudioDevAndCfg`].
