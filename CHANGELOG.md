@@ -1,8 +1,9 @@
 # Changelog
 
-# unreleased
+# v0.5.0 (2025-05-11)
 - **BREAKING** MSRV is 1.81.0
 - (slightly) modernized crate and dependencies
+- updated dependencies
 
 # v0.4.0 (2023-09-21)
 - **BREAKING** MSRV is 1.63.0
