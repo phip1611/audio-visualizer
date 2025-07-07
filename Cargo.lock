@@ -757,9 +757,9 @@ checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
 
 [[package]]
 name = "lowpass-filter"
-version = "0.3.2"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dac6061fee09145b2f2be9a0abca11730341b95ae8b47ae0c80be785a91bc06d"
+checksum = "a188ec9021c053c28edefbd0b11ed723ba2dd18431e08f502893778e6d3e9116"
 
 [[package]]
 name = "mach2"
