@@ -119,13 +119,13 @@ pub fn setup_window(
 /// Returns two drawing areas, that together fill the whole window.
 /// Upper: original audio data
 /// Lower: transformed audio data
-pub fn get_drawing_areas(
-    pixel_buf: &mut [u8],
+pub fn get_drawing_areas<'a>(
+    pixel_buf: &'a mut [u8],
     width: usize,
     height: usize,
 ) -> (
-    DrawingArea<BitMapBackend<BGRXPixel>, Shift>,
-    DrawingArea<BitMapBackend<BGRXPixel>, Shift>,
+    DrawingArea<BitMapBackend<'a, BGRXPixel>, Shift>,
+    DrawingArea<BitMapBackend<'a, BGRXPixel>, Shift>,
 ) {
     // BGRXPixel format required by "minifb" (alpha, red, green, blue)
     let root_drawing_area = BitMapBackend::<BGRXPixel>::with_buffer_and_format(

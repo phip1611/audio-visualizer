@@ -74,7 +74,7 @@ pub fn waveform_static_png_visualize(
         let x = (sample_index as f64 * width_per_sample) as usize;
         // y offset; from top
         // image_height/2: there is our y-axis
-        let sample_value = *sample_value as f64 * -1.0; // y axis grows downwards
+        let sample_value = -(*sample_value as f64); // y axis grows downwards
         let mut y = ((image_height / 2) as f64 + sample_value * height_per_max_amplitude) as usize;
 
         // due to rounding it can happen that we get out of bounds
