@@ -153,7 +153,7 @@ pub fn setup_audio_input_loop(
                 }
             },
             |err| {
-                eprintln!("got stream error: {:#?}", err);
+                eprintln!("got stream error: {err:#?}");
             },
             None,
         )

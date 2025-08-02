@@ -67,9 +67,7 @@ fn select_input_dev() -> cpal::Device {
     println!();
     devs.iter().enumerate().for_each(|(i, (name, _dev))| {
         println!(
-            "  [{}] {}",
-            i,
-            name,
+            "  [{i}] {name}",
             // dev.supported_input_configs().unwrap().collect::<Vec<_>>()
         );
     });

@@ -6,7 +6,7 @@ use std::time::Duration;
 /// Small binary to test audio input across platforms (windows, mac, linux) in a fast way.
 fn main() {
     for host in cpal::available_hosts() {
-        println!("Host={:?}, input devices:", host);
+        println!("Host={host:?}, input devices:");
         for dev in cpal::host_from_id(host).unwrap().input_devices().unwrap() {
             println!(
                 "  {} - Supported input configs:",
@@ -17,7 +17,7 @@ fn main() {
             );
 
             for cfg in dev.supported_input_configs().unwrap() {
-                println!("    {:#?}", cfg);
+                println!("    {cfg:#?}");
             }
         }
     }

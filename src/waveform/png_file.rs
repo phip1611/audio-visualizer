@@ -51,13 +51,13 @@ pub fn waveform_static_png_visualize(
             &left,
             Channels::Mono,
             directory,
-            &format!("left_{}", filename),
+            &format!("left_{filename}"),
         );
         waveform_static_png_visualize(
             &right,
             Channels::Mono,
             directory,
-            &format!("right_{}", filename),
+            &format!("right_{filename}"),
         );
         return;
     }
