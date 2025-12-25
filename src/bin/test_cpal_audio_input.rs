@@ -27,7 +27,7 @@ fn main() {
         .build_input_stream::<f32, _, _>(
             &StreamConfig {
                 channels: 2,
-                sample_rate: SampleRate(48000),
+                sample_rate: 48000,
                 buffer_size: BufferSize::Default,
             },
             |data, _x| {
