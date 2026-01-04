@@ -109,7 +109,7 @@ pub fn open_window_connect_audio(
     input_dev_and_cfg: AudioDevAndCfg,
     audio_data_transform_fn: TransformFn,
 ) {
-    let sample_rate = input_dev_and_cfg.cfg().sample_rate.0 as f32;
+    let sample_rate = input_dev_and_cfg.cfg().sample_rate as f32;
     let latest_audio_data = init_ringbuffer(sample_rate as usize);
     let audio_buffer_len = latest_audio_data.lock().unwrap().len();
     let stream = setup_audio_input_loop(latest_audio_data.clone(), input_dev_and_cfg);
