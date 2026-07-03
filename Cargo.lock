@@ -1404,9 +1404,9 @@ checksum = "8917285742e9f3e1683f0a9c4e6b57960b7314d0b08d30d1ecd426713ee2eee9"
 
 [[package]]
 name = "spectrum-analyzer"
-version = "1.7.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f5353405212be77e7f9e95aa77934f0aafb0f80c586571680b9c20ce5bae758"
+checksum = "ccb8018aad67b7c6d698a3bbc196a47bd28ab653d9a99017bb865c1cd408082b"
 dependencies = [
  "float-cmp",
  "libm",
