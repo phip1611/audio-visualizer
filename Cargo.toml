@@ -23,17 +23,17 @@ exclude = [
 [dependencies]
 png = "0.18"
 # faster compilation: remove unnecessary features
-plotters = { version = "0.3.7", features = ["bitmap_backend", "line_series"] }
-plotters-bitmap = "0.3.7"
-ringbuffer = "0.16.0"
-cpal = "0.18.1"
-minifb = "0.28.0" # gui window
+plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
+plotters-bitmap = "0.3"
+ringbuffer = "0.16"
+cpal = "0.18"
+minifb = "0.28" # gui window
 
 [dev-dependencies]
-biquad = "0.6.0"
-lowpass-filter = "0.3.2"
-spectrum-analyzer = "1.7.0"
-symphonia = { version = "0.6.0", default-features = false, features = ["mp3"] }
+biquad = "0.6"
+lowpass-filter = "0.4"
+spectrum-analyzer = "1.8"
+symphonia = { version = "0.6", default-features = false, features = ["mp3"] }
 
 # otherwise FFT and other code is too slow
 [profile.dev]
