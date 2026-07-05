@@ -75,15 +75,7 @@ impl AudioDevAndCfg {
 impl Debug for AudioDevAndCfg {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("AudioDevAndCfg")
-            .field(
-                "dev",
-                &self
-                    .dev
-                    .name()
-                    .as_ref()
-                    .map(|x| x.as_str())
-                    .unwrap_or("<unknown>"),
-            )
+            .field("dev", &self.dev)
             .field("cfg", &self.cfg)
             .finish()
     }
@@ -104,14 +96,7 @@ pub fn setup_audio_input_loop(
     let dev = audio_dev_and_cfg.dev();
     let cfg = audio_dev_and_cfg.cfg();
 
-    eprintln!(
-        "Using input device '{}' with config: {:?}",
-        dev.name()
-            .as_ref()
-            .map(|x| x.as_str())
-            .unwrap_or("<unknown>"),
-        cfg
-    );
+    eprintln!("Using input device '{}' with config: {:?}", dev, cfg);
 
     assert!(
         cfg.channels == 1 || cfg.channels == 2,
@@ -127,39 +112,36 @@ pub fn setup_audio_input_loop(
 
     let is_mono = cfg.channels == 1;
 
-    let stream = dev
-        .build_input_stream(
-            // This is not as easy as it might look. Even if the supported configs show, that a
-            // input device supports a given fixed buffer size, ALSA but also WASAPI tend to
-            // fail with unclear error messages. I found out, that using the default option is the
-            // only variant that is working on all platforms (Windows, Mac, Linux). The buffer
-            // size tends to be not as small as it would be optimal (for super low latency)
-            // but is still good enough (for example ~10ms on Windows) or ~6ms on ALSA (in my
-            // tests).
-            audio_dev_and_cfg.cfg(),
-            // this is pretty cool by "cpal"; we can use u16, i16 or f32 and
-            // the type system does all the magic behind the scenes. f32 also works
-            // on Windows (WASAPI), MacOS (coreaudio), and Linux (ALSA).
-            // TODO: I found out that we probably can't rely on the fact, that every audio input device
-            //  supports f32. I guess, I need to check this in the supported audio stream config too..
-            move |data: &[f32], _info| {
-                let mut audio_buf = latest_audio_data.lock().unwrap();
-                // Audio buffer only contains Mono data
-                if is_mono {
-                    audio_buf.extend(data.iter().copied());
-                } else {
-                    // interleaving for stereo is LRLR (de-facto standard?)
-                    audio_buf.extend(data.chunks_exact(2).map(|vals| (vals[0] + vals[1]) / 2.0))
-                }
-            },
-            |err| {
-                eprintln!("got stream error: {err:#?}");
-            },
-            None,
-        )
-        .unwrap();
-
-    stream
+    dev.build_input_stream(
+        // This is not as easy as it might look. Even if the supported configs show, that a
+        // input device supports a given fixed buffer size, ALSA but also WASAPI tend to
+        // fail with unclear error messages. I found out, that using the default option is the
+        // only variant that is working on all platforms (Windows, Mac, Linux). The buffer
+        // size tends to be not as small as it would be optimal (for super low latency)
+        // but is still good enough (for example ~10ms on Windows) or ~6ms on ALSA (in my
+        // tests).
+        *audio_dev_and_cfg.cfg(),
+        // this is pretty cool by "cpal"; we can use u16, i16 or f32 and
+        // the type system does all the magic behind the scenes. f32 also works
+        // on Windows (WASAPI), MacOS (coreaudio), and Linux (ALSA).
+        // TODO: I found out that we probably can't rely on the fact, that every audio input device
+        //  supports f32. I guess, I need to check this in the supported audio stream config too..
+        move |data: &[f32], _info| {
+            let mut audio_buf = latest_audio_data.lock().unwrap();
+            // Audio buffer only contains Mono data
+            if is_mono {
+                audio_buf.extend(data.iter().copied());
+            } else {
+                // interleaving for stereo is LRLR (de-facto standard?)
+                audio_buf.extend(data.chunks_exact(2).map(|vals| (vals[0] + vals[1]) / 2.0))
+            }
+        },
+        |err| {
+            eprintln!("got stream error: {err:#?}");
+        },
+        None,
+    )
+    .unwrap()
 }
 
 /// Lists all input devices for [`cpal`]. Can be used to select a device for
@@ -170,12 +152,7 @@ pub fn list_input_devs() -> Vec<(String, cpal::Device)> {
     let mut devs: Vec<(DeviceName, Device)> = host
         .input_devices()
         .unwrap()
-        .map(|dev| {
-            (
-                dev.name().unwrap_or_else(|_| String::from("<unknown>")),
-                dev,
-            )
-        })
+        .map(|dev| (dev.to_string(), dev))
         .collect();
     devs.sort_by(|(n1, _), (n2, _)| n1.cmp(n2));
     devs

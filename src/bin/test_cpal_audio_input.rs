@@ -1,5 +1,5 @@
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{BufferSize, SampleRate, StreamConfig};
+use cpal::{BufferSize, StreamConfig};
 use std::thread::sleep;
 use std::time::Duration;
 
@@ -8,13 +8,7 @@ fn main() {
     for host in cpal::available_hosts() {
         println!("Host={host:?}, input devices:");
         for dev in cpal::host_from_id(host).unwrap().input_devices().unwrap() {
-            println!(
-                "  {} - Supported input configs:",
-                dev.name()
-                    .as_ref()
-                    .map(|s| s.as_str())
-                    .unwrap_or("<unknown>"),
-            );
+            println!("  {} - Supported input configs:", dev,);
 
             for cfg in dev.supported_input_configs().unwrap() {
                 println!("    {cfg:#?}");
@@ -25,7 +19,7 @@ fn main() {
     let default_in = cpal::default_host().default_input_device().unwrap();
     let stream = default_in
         .build_input_stream::<f32, _, _>(
-            &StreamConfig {
+            StreamConfig {
                 channels: 2,
                 sample_rate: 48000,
                 buffer_size: BufferSize::Default,
