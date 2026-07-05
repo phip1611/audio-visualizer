@@ -1,17 +1,22 @@
-{ pkgs ? import <nixpkgs> {} }:
-  pkgs.mkShell rec {
-    nativeBuildInputs = with pkgs; [
+{
+  pkgs ? import <nixpkgs> { },
+}:
+let
+  libs = with pkgs; [
+    alsa-lib
+    fontconfig
+    libx11
+    libxcursor
+    libxkbcommon
+  ];
+
+in
+pkgs.mkShell rec {
+  packages =
+    (with pkgs; [
       pkg-config
-      cargo-nextest
-    ];
+    ])
+    ++ libs;
 
-    buildInputs = with pkgs; [
-      alsa-lib
-      fontconfig
-      libxkbcommon
-      xorg.libXcursor
-      xorg.libX11
-    ];
-
-  LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath buildInputs}";
+  LD_LIBRARY_PATH = libs;
 }
