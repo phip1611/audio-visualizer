@@ -22,9 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use crate::test_util::decode_mp3;
-use audio_visualizer::waveform::png_file::waveform_static_png_visualize;
 use audio_visualizer::ChannelInterleavement;
 use audio_visualizer::Channels;
+use audio_visualizer::waveform::png_file::waveform_static_png_visualize;
 use std::path::PathBuf;
 
 #[allow(unused)]

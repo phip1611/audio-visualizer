@@ -21,10 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
-use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
-use biquad::{Biquad, Coefficients, DirectForm1, ToHertz, Type, Q_BUTTERWORTH_F32};
-use std::io::{stdin, BufRead};
+use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
+use audio_visualizer::dynamic::window_top_btm::{TransformFn, open_window_connect_audio};
+use biquad::{Biquad, Coefficients, DirectForm1, Q_BUTTERWORTH_F32, ToHertz, Type};
+use std::io::{BufRead, stdin};
 
 /// Example that creates a live visualization of realtime audio data
 /// through a lowpass filter. **Execute this with `--release`, otherwise it is very laggy!**.

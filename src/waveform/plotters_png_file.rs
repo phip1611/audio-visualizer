@@ -112,8 +112,8 @@ pub fn waveform_static_plotters_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::testutil::{decode_mp3, TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
+    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR, decode_mp3};
 
     #[test]
     fn test_visualize_png_output() {

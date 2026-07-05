@@ -26,13 +26,13 @@ SOFTWARE.
 use crate::dynamic::window_top_btm::pixel_buf::PixelBuf;
 use minifb::{Window, WindowOptions};
 use plotters::chart::{ChartBuilder, ChartState};
+use plotters::coord::Shift;
 use plotters::coord::cartesian::Cartesian2d;
 use plotters::coord::types::RangedCoordf64;
-use plotters::coord::Shift;
 use plotters::drawing::{DrawingArea, IntoDrawingArea};
 use plotters::style::{IntoFont, WHITE};
-use plotters_bitmap::bitmap_pixel::BGRXPixel;
 use plotters_bitmap::BitMapBackend;
+use plotters_bitmap::bitmap_pixel::BGRXPixel;
 use std::borrow::{Borrow, BorrowMut};
 use std::ops::Range;
 

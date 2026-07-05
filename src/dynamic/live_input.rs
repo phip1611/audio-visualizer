@@ -26,8 +26,8 @@ SOFTWARE.
 //!
 //! It uses the [`cpal`] crate to record audio.
 
-use cpal::traits::{DeviceTrait, HostTrait};
 use cpal::Device;
+use cpal::traits::{DeviceTrait, HostTrait};
 use ringbuffer::AllocRingBuffer;
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
@@ -164,9 +164,11 @@ mod tests {
 
     #[test]
     fn test_list_input_devs() {
-        dbg!(list_input_devs()
-            .iter()
-            .map(|(n, d)| (n, d.default_input_config()))
-            .collect::<Vec<_>>());
+        dbg!(
+            list_input_devs()
+                .iter()
+                .map(|(n, d)| (n, d.default_input_config()))
+                .collect::<Vec<_>>()
+        );
     }
 }

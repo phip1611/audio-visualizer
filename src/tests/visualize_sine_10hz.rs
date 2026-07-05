@@ -22,10 +22,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use crate::tests::testutil::sine::sine_wave_audio_data;
-use crate::tests::testutil::TEST_OUT_DIR;
-use crate::waveform::png_file::waveform_static_png_visualize;
 use crate::Channels;
+use crate::tests::testutil::TEST_OUT_DIR;
+use crate::tests::testutil::sine::sine_wave_audio_data;
+use crate::waveform::png_file::waveform_static_png_visualize;
 
 #[test]
 fn visualize_sine_10hz() {

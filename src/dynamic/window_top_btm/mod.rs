@@ -28,9 +28,9 @@ SOFTWARE.
 //! lowpass filter or a frequency spectrum.
 //!
 //! It uses the [`minifb`] crate to display GUI windows.
-use crate::dynamic::live_input::{setup_audio_input_loop, AudioDevAndCfg};
+use crate::dynamic::live_input::{AudioDevAndCfg, setup_audio_input_loop};
 use crate::dynamic::window_top_btm::visualize_minifb::{
-    get_drawing_areas, setup_window, DEFAULT_H, DEFAULT_W,
+    DEFAULT_H, DEFAULT_W, get_drawing_areas, setup_window,
 };
 use cpal::traits::StreamTrait;
 

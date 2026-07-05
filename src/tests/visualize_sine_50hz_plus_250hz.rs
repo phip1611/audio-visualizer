@@ -21,10 +21,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use crate::tests::testutil::sine::sine_wave_audio_data_multiple;
-use crate::tests::testutil::TEST_OUT_DIR;
-use crate::waveform::png_file::waveform_static_png_visualize;
 use crate::Channels;
+use crate::tests::testutil::TEST_OUT_DIR;
+use crate::tests::testutil::sine::sine_wave_audio_data_multiple;
+use crate::waveform::png_file::waveform_static_png_visualize;
 
 #[test]
 fn visualize_sine_50hz_plus_250hz() {

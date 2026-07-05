@@ -21,12 +21,12 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::{list_input_devs, AudioDevAndCfg};
-use audio_visualizer::dynamic::window_top_btm::{open_window_connect_audio, TransformFn};
+use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
+use audio_visualizer::dynamic::window_top_btm::{TransformFn, open_window_connect_audio};
 use cpal::traits::DeviceTrait;
 use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::cell::{Cell, RefCell};
-use std::io::{stdin, BufRead};
+use std::io::{BufRead, stdin};
 use std::time::Instant;
 
 /// Example that creates a live visualization of the audio signal power of realtime audio data

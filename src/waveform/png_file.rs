@@ -23,8 +23,8 @@ SOFTWARE.
 */
 //! Static waveform visualization which exports the waveform to a PNG file.
 
-use crate::util::png::write_png_file_rgb_tuples;
 use crate::Channels;
+use crate::util::png::write_png_file_rgb_tuples;
 use std::fs;
 use std::path::PathBuf;
 
@@ -97,8 +97,8 @@ pub fn waveform_static_png_visualize(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tests::testutil::{decode_mp3, TEST_OUT_DIR, TEST_SAMPLES_DIR};
     use crate::ChannelInterleavement;
+    use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR, decode_mp3};
 
     /// This test works, if it doesn't panic.
     #[test]
