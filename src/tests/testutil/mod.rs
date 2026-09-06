@@ -37,13 +37,15 @@ pub fn decode_mp3(file: &Path) -> Vec<i16> {
         .unwrap();
 
     let mut audio_data_lrlr = Vec::new();
+    let mut packet_data = Vec::new();
     while let Ok(Some(packet)) = format_reader.next_packet() {
         if let Ok(audio_buf_ref) = decoder.decode(&packet) {
             let audio_spec = audio_buf_ref.spec();
 
             match audio_spec.channels().count() {
                 2 => {
-                    audio_buf_ref.copy_to_vec_interleaved(&mut audio_data_lrlr);
+                    audio_buf_ref.copy_to_vec_interleaved(&mut packet_data);
+                    audio_data_lrlr.extend_from_slice(&packet_data);
                 }
                 n => panic!("Unsupported amount of channels: {n}"),
             }
