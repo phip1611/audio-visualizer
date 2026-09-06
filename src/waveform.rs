@@ -27,7 +27,7 @@ SOFTWARE.
 //! Audio usually has far more samples than the image has horizontal pixels.
 //! Rendering therefore reduces the samples to a min/max envelope per pixel
 //! bucket first, so no peak is lost to naive downsampling and huge inputs
-//! render fast. For real-time visualization see [`crate::dynamic`].
+//! render fast. For real-time visualization see [`crate::live`].
 
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;
@@ -144,15 +144,15 @@ impl<'a> Waveform<'a> {
 }
 
 /// One chart point per bucket of consecutive samples.
-struct Bucket {
-    /// Index of the bucket's first sample, used for the x-axis label.
-    start: usize,
-    min: f32,
-    max: f32,
+pub(crate) struct Bucket {
+    /// Index of the bucket's first sample, used for the x-axis position.
+    pub(crate) start: usize,
+    pub(crate) min: f32,
+    pub(crate) max: f32,
 }
 
 /// Reduces the samples to at most `max_points` min/max buckets.
-fn envelope(samples: &[f32], max_points: usize) -> Vec<Bucket> {
+pub(crate) fn envelope(samples: &[f32], max_points: usize) -> Vec<Bucket> {
     let bucket_len = samples.len().div_ceil(max_points);
     samples
         .chunks(bucket_len)

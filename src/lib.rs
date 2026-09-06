@@ -31,7 +31,7 @@ SOFTWARE.
 //!
 //! - **Static images**: [`waveform::Waveform`] renders samples as
 //!   PNG file or SVG string; [`spectrum`] does the same for frequency spectra.
-//! - **Live visualization**: [`dynamic`] records audio from an input device
+//! - **Live visualization**: [`live`] records audio from an input device
 //!   and shows the waveform plus a custom transformation (e.g. lowpass filter
 //!   or spectrum) in a real-time GUI window.
 
@@ -54,6 +54,7 @@ SOFTWARE.
 #![deny(rustdoc::all)]
 
 pub mod dynamic;
+pub mod live;
 pub mod spectrum;
 pub mod waveform;
 
