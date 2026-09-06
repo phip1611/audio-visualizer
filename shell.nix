@@ -4,10 +4,13 @@
 let
   libs = with pkgs; [
     alsa-lib
-    fontconfig
+    libGL
     libx11
     libxcursor
+    libxi
     libxkbcommon
+    libxrandr
+    wayland
   ];
 
 in
