@@ -43,13 +43,16 @@ SOFTWARE.
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
 
+pub mod dynamic;
 pub mod spectrum;
+pub mod util;
 pub mod waveform;
 
-pub mod dynamic;
+mod error;
 #[cfg(test)]
 mod tests;
-pub mod util;
+
+pub use error::Error;
 
 /// Describes the interleavement of audio data if
 /// it is not mono but stereo.
