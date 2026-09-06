@@ -21,15 +21,25 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+//! Helpers shared by the `live_visualize_*` examples.
 
-//! Module provides functions to dynamically get audio input (e.g. from mic).
-//!
-//! Further, it provides functionality to display the recorded audio
-//! side-by-side with a transformation of the audio data, such as a lowpass
-//! filter or a frequency spectrum.
-//!
-//! **Its recommended to execute all functions here only with `--release`-flag.
-//! Otherwise, the demo might run really slowly.
+use audio_visualizer::live::AudioInput;
+use cpal::traits::DeviceTrait;
+use std::io::{BufRead, stdin};
 
-pub mod live_input;
-pub mod window_top_btm;
+/// Lets the user select an audio input device on stdin if there are multiple.
+pub fn select_input() -> AudioInput {
+    let mut devs = AudioInput::devices().unwrap();
+    assert!(!devs.is_empty(), "no audio input devices found!");
+    if devs.len() == 1 {
+        return AudioInput::from_device(devs.remove(0).1).unwrap();
+    }
+    println!();
+    devs.iter().enumerate().for_each(|(i, (name, dev))| {
+        println!("  [{i}] {name} {:?}", dev.default_input_config().unwrap());
+    });
+    let mut input = String::new();
+    stdin().lock().read_line(&mut input).unwrap();
+    let index = input.trim().parse::<usize>().unwrap();
+    AudioInput::from_device(devs.remove(index).1).unwrap()
+}

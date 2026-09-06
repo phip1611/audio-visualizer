@@ -21,9 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! Super basic and simple audio visualization library which is especially useful for developers to
-//! visually check audio samples, e.g. by waveform or spectrum. (So far) this library is not
-//! capable of doing nice visualizations for end users. Contributions are welcome.
+//! Audio visualization library for developers: quickly check audio samples
+//! visually, e.g. while working on audio algorithms. It is not intended for
+//! polished end-user visualizations.
+//!
+//! All functionality works on mono `f32` samples, typically amplitudes in
+//! `[-1.0, 1.0]`. Split interleaved stereo data with [`deinterleave_stereo`]
+//! first.
+//!
+//! - **Static images**: [`waveform::Waveform`] renders samples as
+//!   PNG file or SVG string; [`spectrum`] does the same for frequency spectra.
+//! - **Live visualization**: [`live`] records audio from an input device
+//!   and shows the waveform plus a custom transformation (e.g. lowpass filter
+//!   or spectrum) in a real-time GUI window.
 
 #![deny(
     clippy::all,
@@ -43,82 +53,27 @@ SOFTWARE.
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
 
+pub mod live;
 pub mod spectrum;
 pub mod waveform;
 
-pub mod dynamic;
+mod chart;
+mod error;
 #[cfg(test)]
 mod tests;
-pub mod util;
 
-/// Describes the interleavement of audio data if
-/// it is not mono but stereo.
-#[derive(Debug, Copy, Clone)]
-pub enum ChannelInterleavement {
-    /// Stereo samples of one vector of audio data are alternating: left, right, left, right
-    LRLR,
-    /// Stereo samples of one vector of audio data are ordered like: left, left, ..., right, right
-    /// In this case the length must be a multiple of 2.
-    LLRR,
-}
+pub use error::Error;
 
-impl ChannelInterleavement {
-    pub const fn is_lrlr(&self) -> bool {
-        matches!(self, Self::LRLR)
-    }
-    pub const fn is_lllrr(&self) -> bool {
-        matches!(self, Self::LLRR)
-    }
-    /// Transforms the interleaved data into two vectors.
-    /// Returns a tuple. First/left value is left channel, second/right value is right channel.
-    pub fn to_channel_data(&self, interleaved_data: &[i16]) -> (Vec<i16>, Vec<i16>) {
-        let mut left_data = vec![];
-        let mut right_data = vec![];
-
-        if self.is_lrlr() {
-            let mut is_left = true;
-            for sample in interleaved_data {
-                if is_left {
-                    left_data.push(*sample);
-                } else {
-                    right_data.push(*sample)
-                }
-                is_left = !is_left;
-            }
-        } else {
-            let n = interleaved_data.len();
-            for sample_i in interleaved_data.iter().take(n / 2).copied() {
-                left_data.push(sample_i);
-            }
-            for sample_i in interleaved_data.iter().skip(n / 2).copied() {
-                right_data.push(sample_i);
-            }
-        }
-
-        (left_data, right_data)
-    }
-}
-
-/// Describes the number of channels of an audio stream.
-#[derive(Debug, Copy, Clone)]
-pub enum Channels {
-    Mono,
-    Stereo(ChannelInterleavement),
-}
-
-impl Channels {
-    pub const fn is_mono(&self) -> bool {
-        matches!(self, Self::Mono)
-    }
-
-    pub const fn is_stereo(&self) -> bool {
-        matches!(self, Self::Stereo(_))
-    }
-
-    pub fn stereo_interleavement(&self) -> ChannelInterleavement {
-        match self {
-            Self::Stereo(interleavmement) => *interleavmement,
-            _ => panic!("Not stereo"),
-        }
-    }
+/// Splits interleaved stereo samples (left, right, left, right, ...) into a
+/// left and a right channel vector.
+///
+/// # Panics
+/// Panics if the number of samples is odd.
+pub fn deinterleave_stereo(samples: &[f32]) -> (Vec<f32>, Vec<f32>) {
+    let (pairs, rest) = samples.as_chunks::<2>();
+    assert!(
+        rest.is_empty(),
+        "stereo data must have an even number of samples"
+    );
+    pairs.iter().map(|[l, r]| (*l, *r)).unzip()
 }

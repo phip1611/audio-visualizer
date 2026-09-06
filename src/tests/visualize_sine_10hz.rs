@@ -22,10 +22,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use crate::Channels;
 use crate::tests::testutil::TEST_OUT_DIR;
 use crate::tests::testutil::sine::sine_wave_audio_data;
-use crate::waveform::png_file::waveform_static_png_visualize;
+use crate::waveform::Waveform;
 
 #[test]
 fn visualize_sine_10hz() {
@@ -34,10 +33,9 @@ fn visualize_sine_10hz() {
     let duration_ms = 1000;
     // we expect 10 time periods of the sine wav in the time interval
     let audio_signal = sine_wave_audio_data(frequency, sampling_rate, duration_ms);
-    waveform_static_png_visualize(
-        &audio_signal,
-        Channels::Mono,
-        TEST_OUT_DIR,
-        "sinus-wave-10hz.png",
-    )
+    Waveform::new(&audio_signal)
+        .sample_rate(sampling_rate as f32)
+        .title("10 Hz sine wave")
+        .write_png(format!("{TEST_OUT_DIR}/sinus-wave-10hz.png"))
+        .unwrap();
 }

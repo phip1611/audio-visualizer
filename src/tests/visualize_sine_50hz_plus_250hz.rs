@@ -21,10 +21,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use crate::Channels;
 use crate::tests::testutil::TEST_OUT_DIR;
 use crate::tests::testutil::sine::sine_wave_audio_data_multiple;
-use crate::waveform::png_file::waveform_static_png_visualize;
+use crate::waveform::Waveform;
 
 #[test]
 fn visualize_sine_50hz_plus_250hz() {
@@ -37,10 +36,9 @@ fn visualize_sine_50hz_plus_250hz() {
         sampling_rate,
         duration_ms,
     );
-    waveform_static_png_visualize(
-        &sin_audio_sum,
-        Channels::Mono,
-        TEST_OUT_DIR,
-        "sinus-wave-50hz_plus_250hz.png",
-    )
+    Waveform::new(&sin_audio_sum)
+        .sample_rate(sampling_rate as f32)
+        .title("50 Hz + 250 Hz sine wave")
+        .write_png(format!("{TEST_OUT_DIR}/sinus-wave-50hz_plus_250hz.png"))
+        .unwrap();
 }

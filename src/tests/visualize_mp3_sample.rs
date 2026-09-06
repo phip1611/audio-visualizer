@@ -22,10 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-//! Module for several frequency spectrum visualization implementations.
-//!
-//! This module focuses on static visualization. For dynamic visualization,
-//! look into the [`crate::dynamic`] module + corresponding examples in `examples/`.
+use crate::deinterleave_stereo;
+use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR, decode_mp3};
+use crate::waveform::Waveform;
+use std::path::Path;
 
-pub mod plotters_png_file;
-pub mod png_file;
+#[test]
+fn visualize_mp3_sample() {
+    let lrlr_samples = decode_mp3(&Path::new(TEST_SAMPLES_DIR).join("sample_1.mp3"));
+    let (left, right) = deinterleave_stereo(&lrlr_samples);
+
+    for (samples, name) in [(left, "left"), (right, "right")] {
+        Waveform::new(&samples)
+            .sample_rate(44100.0)
+            .title(format!("sample_1.mp3 ({name} channel)"))
+            .write_png(format!("{TEST_OUT_DIR}/sample_1_waveform_{name}.png"))
+            .unwrap();
+    }
+}

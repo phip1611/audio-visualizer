@@ -21,52 +21,23 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
-use audio_visualizer::dynamic::window_top_btm::{TransformFn, open_window_connect_audio};
-use cpal::traits::DeviceTrait;
+use audio_visualizer::live::{LiveVisualizer, Transform};
 use lowpass_filter::lowpass_filter_slice;
-use std::io::{BufRead, stdin};
 
-/// Example that creates a live visualization of realtime audio data
-/// through a lowpass filter. **Execute this with `--release`, otherwise it is very laggy!**.
+mod common;
+
+/// Live visualization of real-time audio through a lowpass filter.
+/// **Execute this with `--release`, otherwise it is very laggy!**
 fn main() {
-    let in_dev = select_input_dev();
-    open_window_connect_audio(
-        "Live Audio Lowpass Filter View",
-        None,
-        None,
-        None,
-        None,
-        "time (seconds)",
-        "Amplitude (with Lowpass filter)",
-        AudioDevAndCfg::new(Some(in_dev), None),
-        // lowpass filter
-        TransformFn::Basic(|x, sampling_rate| {
-            let mut data_f32 = x.to_vec();
-            lowpass_filter_slice(&mut data_f32, sampling_rate, 80.0);
-            data_f32
-        }),
-    );
-}
-
-/// Helps to select an input device.
-fn select_input_dev() -> cpal::Device {
-    let mut devs = list_input_devs();
-    assert!(!devs.is_empty(), "no input devices found!");
-    if devs.len() == 1 {
-        return devs.remove(0).1;
-    }
-    println!();
-    devs.iter().enumerate().for_each(|(i, (name, dev))| {
-        println!(
-            "  [{}] {} {:?}",
-            i,
-            name,
-            dev.default_input_config().unwrap()
-        );
-    });
-    let mut input = String::new();
-    stdin().lock().read_line(&mut input).unwrap();
-    let index = input[0..1].parse::<usize>().unwrap();
-    devs.remove(index).1
+    let input = common::select_input();
+    LiveVisualizer::new(Transform::waveform(|samples, sample_rate| {
+        let mut samples = samples.to_vec();
+        lowpass_filter_slice(&mut samples, sample_rate, 80.0);
+        samples
+    }))
+    .title("Live Audio Lowpass Filter View")
+    .axis_labels("time (seconds)", "amplitude (lowpass filtered)")
+    .input(input)
+    .open()
+    .unwrap();
 }

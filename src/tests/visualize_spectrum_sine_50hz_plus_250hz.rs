@@ -21,10 +21,31 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! Module for several waveform visualization implementations.
-//!
-//! This module focuses on static visualization. For dynamic visualization,
-//! look into the [`crate::dynamic`] module + corresponding examples in `examples/`.
 
-pub mod plotters_png_file;
-pub mod png_file;
+use crate::spectrum::Spectrum;
+use crate::tests::testutil::TEST_OUT_DIR;
+use crate::tests::testutil::sine::sine_wave_audio_data_multiple;
+use spectrum_analyzer::windows::hann_window;
+use spectrum_analyzer::{FrequencyLimit, samples_fft_to_spectrum};
+
+#[test]
+fn visualize_spectrum_sine_50hz_plus_250hz() {
+    let sampling_rate = 44100;
+    let audio = sine_wave_audio_data_multiple(&[50.0, 250.0], sampling_rate, 1000);
+
+    let window = hann_window(&audio[0..4096]);
+    let spectrum =
+        samples_fft_to_spectrum(&window, sampling_rate, FrequencyLimit::Max(400.0), None).unwrap();
+    let data = spectrum
+        .data()
+        .iter()
+        .map(|(frequency, magnitude)| (frequency.val(), magnitude.val()))
+        .collect::<Vec<_>>();
+
+    Spectrum::new(&data)
+        .highlight(50.0)
+        .highlight(250.0)
+        .title("Spectrum of 50 Hz + 250 Hz sine wave")
+        .write_png(format!("{TEST_OUT_DIR}/spectrum_sine_50hz_plus_250hz.png"))
+        .unwrap();
+}
