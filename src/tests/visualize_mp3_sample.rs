@@ -22,20 +22,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-use crate::tests::testutil::TEST_OUT_DIR;
-use crate::tests::testutil::sine::sine_wave_audio_data;
+use crate::deinterleave_stereo;
+use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR, decode_mp3};
 use crate::waveform::Waveform;
+use std::path::Path;
 
 #[test]
-fn visualize_sine_10hz() {
-    let frequency = 10_f64;
-    let sampling_rate = 44100;
-    let duration_ms = 1000;
-    // we expect 10 time periods of the sine wav in the time interval
-    let audio_signal = sine_wave_audio_data(frequency, sampling_rate, duration_ms);
-    Waveform::new(&audio_signal)
-        .sample_rate(sampling_rate as f32)
-        .title("10 Hz sine wave")
-        .write_png(format!("{TEST_OUT_DIR}/sinus-wave-10hz.png"))
-        .unwrap();
+fn visualize_mp3_sample() {
+    let lrlr_samples = decode_mp3(&Path::new(TEST_SAMPLES_DIR).join("sample_1.mp3"));
+    let (left, right) = deinterleave_stereo(&lrlr_samples);
+
+    for (samples, name) in [(left, "left"), (right, "right")] {
+        Waveform::new(&samples)
+            .sample_rate(44100.0)
+            .title(format!("sample_1.mp3 ({name} channel)"))
+            .write_png(format!("{TEST_OUT_DIR}/sample_1_waveform_{name}.png"))
+            .unwrap();
+    }
 }

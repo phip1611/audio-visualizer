@@ -15,8 +15,8 @@ pub const TEST_SAMPLES_DIR: &str = "test/samples";
 /// If tests create files, they should be stored here.
 pub const TEST_OUT_DIR: &str = "target/test_out";
 
-/// Returns an MP3 as decoded i16 samples and with LRLR interleavement.
-pub fn decode_mp3(file: &Path) -> Vec<i16> {
+/// Returns an MP3 as decoded f32 samples and with LRLR interleavement.
+pub fn decode_mp3(file: &Path) -> Vec<f32> {
     let file = File::open(file).unwrap();
     let mss = MediaSourceStream::new(Box::new(file), Default::default());
     let probed = get_probe()

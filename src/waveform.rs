@@ -29,9 +29,6 @@ SOFTWARE.
 //! bucket first, so no peak is lost to naive downsampling and huge inputs
 //! render fast. For real-time visualization see [`crate::dynamic`].
 
-pub mod plotters_png_file;
-pub mod png_file;
-
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;
 use charts_rs::{LineChart, Series};
