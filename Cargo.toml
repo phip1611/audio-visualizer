@@ -28,11 +28,6 @@ cpal = "0.18"
 eframe = "0.36"
 egui_plot = "0.37"
 ringbuffer = "0.16"
-# superseded by eframe/egui_plot; removed together with the dynamic module
-minifb = "0.28"
-# faster compilation: remove unnecessary features
-plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
-plotters-bitmap = "0.3"
 
 [dev-dependencies]
 lowpass-filter = "0.5"
