@@ -11,12 +11,12 @@ let
   ];
 
 in
-pkgs.mkShell rec {
+pkgs.mkShell {
   packages =
     (with pkgs; [
       pkg-config
     ])
     ++ libs;
 
-  LD_LIBRARY_PATH = libs;
+  LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
 }
