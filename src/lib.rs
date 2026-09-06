@@ -57,7 +57,6 @@ SOFTWARE.
 
 pub mod dynamic;
 pub mod spectrum;
-pub mod util;
 pub mod waveform;
 
 mod chart;
