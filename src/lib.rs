@@ -21,9 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-//! Super basic and simple audio visualization library which is especially useful for developers to
-//! visually check audio samples, e.g. by waveform or spectrum. (So far) this library is not
-//! capable of doing nice visualizations for end users. Contributions are welcome.
+//! Audio visualization library for developers: quickly check audio samples
+//! visually, e.g. while working on audio algorithms. It is not intended for
+//! polished end-user visualizations.
+//!
+//! All functionality works on mono `f32` samples, typically amplitudes in
+//! `[-1.0, 1.0]`. Split interleaved stereo data with [`deinterleave_stereo`]
+//! first.
+//!
+//! - **Static images**: [`waveform::Waveform`] renders samples as
+//!   PNG file or SVG string; [`spectrum`] does the same for frequency spectra.
+//! - **Live visualization**: [`dynamic`] records audio from an input device
+//!   and shows the waveform plus a custom transformation (e.g. lowpass filter
+//!   or spectrum) in a real-time GUI window.
 
 #![deny(
     clippy::all,
@@ -48,11 +58,26 @@ pub mod spectrum;
 pub mod util;
 pub mod waveform;
 
+mod chart;
 mod error;
 #[cfg(test)]
 mod tests;
 
 pub use error::Error;
+
+/// Splits interleaved stereo samples (left, right, left, right, ...) into a
+/// left and a right channel vector.
+///
+/// # Panics
+/// Panics if the number of samples is odd.
+pub fn deinterleave_stereo(samples: &[f32]) -> (Vec<f32>, Vec<f32>) {
+    let (pairs, rest) = samples.as_chunks::<2>();
+    assert!(
+        rest.is_empty(),
+        "stereo data must have an even number of samples"
+    );
+    pairs.iter().map(|[l, r]| (*l, *r)).unzip()
+}
 
 /// Describes the interleavement of audio data if
 /// it is not mono but stereo.
