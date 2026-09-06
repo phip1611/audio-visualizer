@@ -30,9 +30,8 @@ cpal = "0.18"
 minifb = "0.28" # gui window
 
 [dev-dependencies]
-biquad = "0.6"
-lowpass-filter = "0.4"
-spectrum-analyzer = "1.8"
+lowpass-filter = "0.5"
+spectrum-analyzer = "1.9"
 symphonia = { version = "0.6", default-features = false, features = ["mp3"] }
 
 # otherwise FFT and other code is too slow
