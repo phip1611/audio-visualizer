@@ -21,6 +21,7 @@ exclude = [
 ]
 
 [dependencies]
+charts-rs = { version = "1.0", features = ["png"] }
 png = "0.18"
 # faster compilation: remove unnecessary features
 plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
