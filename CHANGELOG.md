@@ -1,9 +1,33 @@
 # Changelog
 
-## Unreleased
-- **BREAKING** MSRV is 1.85.1
+## Unreleased (v0.7.0)
+
+Complete overhaul of the crate: same functionality, new API, new rendering
+stacks.
+
+- **BREAKING** all functionality works on mono `f32` samples (amplitudes in
+  `[-1.0, 1.0]`); the `Channels`/`ChannelInterleavement` enums are replaced
+  by `deinterleave_stereo()` (LLRR interleavement support was dropped)
+- **BREAKING** static visualizations: the `waveform::Waveform` and
+  `spectrum::Spectrum` builders (PNG file + SVG string output) replace the
+  four `*_static_*_visualize` functions; rendering uses the actively
+  maintained [charts-rs](https://crates.io/crates/charts-rs) instead of the
+  unmaintained plotters and the hand-rolled PNG plotting
+- **BREAKING** live visualization: `live::LiveVisualizer` and
+  `live::Transform` replace `dynamic::window_top_btm::open_window_connect_audio`
+  and its nine positional parameters; the GUI uses
+  [egui](https://crates.io/crates/egui)/eframe + egui_plot instead of
+  minifb + plotters (axes and auto bounds included);
+  `dynamic::live_input::AudioDevAndCfg` becomes `live::AudioInput`
+- **BREAKING** fallible operations return `Result<_, audio_visualizer::Error>`
+  instead of panicking
+- **BREAKING** MSRV is 1.95.0
+- transforms are `FnMut` closures now and may hold state across frames
+- waveforms are rendered as a min/max envelope per pixel bucket, so peaks
+  survive downsampling and large inputs render fast
 - Rust edition is 2024
-- Updated dependencies
+- updated all dependencies; removed plotters, plotters-bitmap, minifb, png
+  and biquad (the lowpass filter example uses the latest lowpass-filter)
 
 ## v0.5.0 (2025-05-11)
 - **BREAKING** MSRV is 1.81.0
