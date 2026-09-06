@@ -55,7 +55,6 @@ SOFTWARE.
 #![deny(missing_debug_implementations)]
 #![deny(rustdoc::all)]
 
-pub mod dynamic;
 pub mod live;
 pub mod spectrum;
 pub mod waveform;
