@@ -21,13 +21,18 @@ exclude = [
 ]
 
 [dependencies]
+# static chart rendering (PNG/SVG)
 charts-rs = { version = "1.0", features = ["png"] }
+# live visualization: audio recording + GUI window with plots
+cpal = "0.18"
+eframe = "0.36"
+egui_plot = "0.37"
+ringbuffer = "0.16"
+# superseded by eframe/egui_plot; removed together with the dynamic module
+minifb = "0.28"
 # faster compilation: remove unnecessary features
 plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
 plotters-bitmap = "0.3"
-ringbuffer = "0.16"
-cpal = "0.18"
-minifb = "0.28" # gui window
 
 [dev-dependencies]
 lowpass-filter = "0.5"
