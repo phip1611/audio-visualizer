@@ -36,7 +36,7 @@ SOFTWARE.
 //! signal by orders of magnitude: peaks between two picked samples vanish,
 //! and what is left aliases into a pattern that is not in the audio.
 //!
-//! For real-time visualization see [`crate::dynamic`].
+//! For real-time visualization see [`crate::live`].
 
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;
@@ -156,33 +156,51 @@ impl<'a> Waveform<'a> {
 ///
 /// A bucket keeps only its minimum and maximum; everything between them is
 /// discarded. That is what makes the reduction lossy but peak-preserving.
-struct Bucket {
-    /// Index of the bucket's first sample, used for the x-axis label.
-    start: usize,
-    min: f32,
-    max: f32,
+pub(crate) struct Bucket {
+    /// Index of the bucket's first sample, used for the x-axis position.
+    pub(crate) start: usize,
+    pub(crate) min: f32,
+    pub(crate) max: f32,
 }
 
 /// Reduces the samples to at most `max_points` min/max buckets.
 ///
 /// The bucket length follows from the input length, which is what a static
 /// image needs: the whole input is covered whatever its size.
-fn envelope(samples: &[f32], max_points: usize) -> Vec<Bucket> {
+pub(crate) fn envelope(samples: &[f32], max_points: usize) -> Vec<Bucket> {
     let bucket_len = samples.len().div_ceil(max_points);
     samples
         .chunks(bucket_len)
         .enumerate()
-        .map(|(i, bucket)| {
-            let (min, max) = bucket
-                .iter()
-                .fold((f32::MAX, f32::MIN), |(lo, hi), s| (lo.min(*s), hi.max(*s)));
-            Bucket {
-                start: i * bucket_len,
-                min,
-                max,
-            }
-        })
+        .map(|(i, bucket)| bucket_of(i, bucket_len, bucket))
         .collect()
+}
+
+/// Like [`envelope`], but with a caller-chosen bucket length and without a
+/// trailing bucket that is not completely filled.
+///
+/// A scrolling view needs both, because its input is a moving window over a
+/// stream instead of a fixed slice: the bucket length must not change with
+/// the window, and a partially filled bucket would summarize a different
+/// number of samples on every frame. See `live::aligned_envelope` for the
+/// invariant built on top of this.
+pub(crate) fn envelope_exact(samples: &[f32], bucket_len: usize) -> Vec<Bucket> {
+    samples
+        .chunks_exact(bucket_len)
+        .enumerate()
+        .map(|(i, bucket)| bucket_of(i, bucket_len, bucket))
+        .collect()
+}
+
+fn bucket_of(index: usize, bucket_len: usize, samples: &[f32]) -> Bucket {
+    let (min, max) = samples
+        .iter()
+        .fold((f32::MAX, f32::MIN), |(lo, hi), s| (lo.min(*s), hi.max(*s)));
+    Bucket {
+        start: index * bucket_len,
+        min,
+        max,
+    }
 }
 
 #[cfg(test)]

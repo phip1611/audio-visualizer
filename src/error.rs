@@ -36,6 +36,11 @@ pub enum Error {
     Io(std::io::Error),
     /// Rendering or encoding the chart failed.
     Chart(charts_rs::Error),
+    /// Interacting with the audio backend failed, e.g. no input device found
+    /// or recording failed.
+    Audio(String),
+    /// Running the GUI window failed.
+    Gui(String),
 }
 
 impl Display for Error {
@@ -44,6 +49,8 @@ impl Display for Error {
             Self::InvalidData(msg) => write!(f, "invalid input data: {msg}"),
             Self::Io(e) => write!(f, "I/O error: {e}"),
             Self::Chart(e) => write!(f, "chart rendering error: {e}"),
+            Self::Audio(msg) => write!(f, "audio backend error: {msg}"),
+            Self::Gui(msg) => write!(f, "GUI error: {msg}"),
         }
     }
 }
@@ -51,7 +58,7 @@ impl Display for Error {
 impl std::error::Error for Error {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
-            Self::InvalidData(_) => None,
+            Self::InvalidData(_) | Self::Audio(_) | Self::Gui(_) => None,
             Self::Io(e) => Some(e),
             Self::Chart(e) => Some(e),
         }
