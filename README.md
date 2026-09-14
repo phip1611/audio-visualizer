@@ -69,9 +69,6 @@ LiveVisualizer::new(Transform::waveform(|samples, sample_rate| {
 .open()?;
 ```
 
-The GIFs below were recorded with the previous minifb-based UI; the current
-egui-based UI shows the same content with nicer axes.
-
 #### Real-time audio + lowpass filter
 
 ![Example visualization of real-time audio + lowpass filter](res/live_demo_lowpass_filter_green_day_holiday.gif "Example visualization of real-time audio + lowpass filter") \
