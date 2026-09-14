@@ -21,24 +21,22 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use crate::test_util::decode_mp3;
-use audio_visualizer::deinterleave_stereo;
-use audio_visualizer::waveform::Waveform;
+
+use crate::deinterleave_stereo;
+use crate::tests::testutil::{TEST_OUT_DIR, TEST_SAMPLES_DIR, decode_mp3};
+use crate::waveform::Waveform;
 use std::path::Path;
 
-#[allow(unused)]
-#[path = "../src/tests/testutil/mod.rs"]
-mod test_util;
-
-fn main() {
-    let lrlr_mp3_samples = decode_mp3(Path::new("test/samples/sample_1.mp3"));
-    let (left, right) = deinterleave_stereo(&lrlr_mp3_samples);
+#[test]
+fn visualize_mp3_sample() {
+    let lrlr_samples = decode_mp3(&Path::new(TEST_SAMPLES_DIR).join("sample_1.mp3"));
+    let (left, right) = deinterleave_stereo(&lrlr_samples);
 
     for (samples, name) in [(left, "left"), (right, "right")] {
         Waveform::new(&samples)
             .sample_rate(44100.0)
             .title(format!("sample_1.mp3 ({name} channel)"))
-            .write_png(format!("target/test_out/sample_1_waveform_{name}.png"))
+            .write_png(format!("{TEST_OUT_DIR}/sample_1_waveform_{name}.png"))
             .unwrap();
     }
 }
