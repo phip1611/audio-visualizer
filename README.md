@@ -1,7 +1,7 @@
 # Rust library: audio-visualizer
 
-So far this library is rather basic and targets developers that develop audio algorithms. With this library you can
-easily display your current audio data/waveform/spectrum and check if everything looks good/as expected.
+Audio visualization library for developers: quickly check audio samples
+visually, e.g. while working on audio algorithms.
 
 ## Covered Functionality
 

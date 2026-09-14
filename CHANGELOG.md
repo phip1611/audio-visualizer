@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- **BREAKING** MSRV is 1.85.1
+- **BREAKING** MSRV is 1.88.0
 - Rust edition is 2024
 - Updated dependencies
 

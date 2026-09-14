@@ -22,26 +22,23 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use crate::test_util::decode_mp3;
-use audio_visualizer::ChannelInterleavement;
-use audio_visualizer::Channels;
-use audio_visualizer::waveform::png_file::waveform_static_png_visualize;
-use std::path::PathBuf;
+use audio_visualizer::deinterleave_stereo;
+use audio_visualizer::waveform::Waveform;
+use std::path::Path;
 
 #[allow(unused)]
 #[path = "../src/tests/testutil/mod.rs"]
 mod test_util;
 
 fn main() {
-    let mut path = PathBuf::new();
-    path.push("test/samples");
-    path.push("sample_1.mp3");
+    let lrlr_mp3_samples = decode_mp3(Path::new("test/samples/sample_1.mp3"));
+    let (left, right) = deinterleave_stereo(&lrlr_mp3_samples);
 
-    let lrlr_mp3_samples = decode_mp3(path.as_path());
-
-    waveform_static_png_visualize(
-        &lrlr_mp3_samples,
-        Channels::Stereo(ChannelInterleavement::LRLR),
-        "target/test_out",
-        "sample_1_waveform.png",
-    );
+    for (samples, name) in [(left, "left"), (right, "right")] {
+        Waveform::new(&samples)
+            .sample_rate(44100.0)
+            .title(format!("sample_1.mp3 ({name} channel)"))
+            .write_png(format!("target/test_out/sample_1_waveform_{name}.png"))
+            .unwrap();
+    }
 }

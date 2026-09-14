@@ -133,7 +133,12 @@ pub fn setup_audio_input_loop(
                 audio_buf.extend(data.iter().copied());
             } else {
                 // interleaving for stereo is LRLR (de-facto standard?)
-                audio_buf.extend(data.chunks_exact(2).map(|vals| (vals[0] + vals[1]) / 2.0))
+                audio_buf.extend(
+                    data.as_chunks::<2>()
+                        .0
+                        .iter()
+                        .map(|vals| (vals[0] + vals[1]) / 2.0),
+                )
             }
         },
         |err| {
