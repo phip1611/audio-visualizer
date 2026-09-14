@@ -22,8 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 //! Audio visualization library for developers: quickly check audio samples
-//! visually, e.g. while working on audio algorithms. It is not intended for
-//! polished end-user visualizations.
+//! visually, e.g. while working on audio algorithms.
 //!
 //! All functionality works on mono `f32` samples, typically amplitudes in
 //! `[-1.0, 1.0]`. Split interleaved stereo data with [`deinterleave_stereo`]
