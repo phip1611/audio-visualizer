@@ -32,6 +32,18 @@ use ringbuffer::{AllocRingBuffer, RingBuffer};
 use std::fmt::{Debug, Formatter};
 use std::sync::{Arc, Mutex};
 
+/// Callback size in frames to request when the stream config leaves the
+/// buffer size to the device.
+///
+/// The visualization only moves when a callback delivers new samples, so
+/// the callback rate caps the perceived frame rate regardless of how fast
+/// the window renders. Device defaults are coarse: PipeWire's default
+/// quantum is 1024 frames, i.e. ~47 callbacks/s at 48 kHz, which visibly
+/// stutters on a 100 Hz display (one update every ~2 frames). 256 frames is
+/// 5.3 ms at 48 kHz, enough for displays well beyond 144 Hz, and cheap: the
+/// callback only appends to the ringbuffer.
+const PREFERRED_BUFFER_FRAMES: u32 = 256;
+
 /// The latest recorded samples together with the number of samples recorded
 /// in total.
 ///
@@ -115,6 +127,12 @@ impl AudioInput {
     }
 
     /// Uses the given device and stream configuration.
+    ///
+    /// A `buffer_size` of [`cpal::BufferSize::Default`] does not mean the
+    /// device default: recording then asks for 256 frames per callback,
+    /// which keeps the visualization moving every frame on high refresh
+    /// rate displays, and only falls back to the device default if the
+    /// device rejects that. A fixed size is used as given.
     #[must_use]
     pub const fn new(dev: cpal::Device, cfg: cpal::StreamConfig) -> Self {
         Self { dev, cfg }
@@ -161,14 +179,10 @@ impl AudioInput {
         }
         let is_mono = channels == 1;
 
-        self.dev
-            .build_input_stream(
-                // Even if the supported configs claim that an input device
-                // supports a fixed buffer size, ALSA and WASAPI tend to fail
-                // with unclear errors. The default buffer size is the only
-                // variant working reliably on all platforms and still gives
-                // a good enough latency (~10ms on Windows, ~6ms on ALSA).
-                self.cfg,
+        let build = |cfg: cpal::StreamConfig| {
+            let latest_audio_data = latest_audio_data.clone();
+            self.dev.build_input_stream(
+                cfg,
                 move |data: &[f32], _info| {
                     let mut audio_buf = latest_audio_data.lock().unwrap();
                     if is_mono {
@@ -182,7 +196,22 @@ impl AudioInput {
                 |err| eprintln!("audio stream error: {err:#?}"),
                 None,
             )
-            .map_err(|e| Error::Audio(format!("can't build input stream: {e}")))
+        };
+
+        if matches!(self.cfg.buffer_size, cpal::BufferSize::Default) {
+            let preferred = cpal::StreamConfig {
+                buffer_size: cpal::BufferSize::Fixed(PREFERRED_BUFFER_FRAMES),
+                ..self.cfg
+            };
+            // Some devices only support their own period size and reject
+            // this right here (e.g. "not in the supported range
+            // 1024..=1024"); the default size then still records, just with
+            // coarser updates.
+            if let Ok(stream) = build(preferred) {
+                return Ok(stream);
+            }
+        }
+        build(self.cfg).map_err(|e| Error::Audio(format!("can't build input stream: {e}")))
     }
 }
 
