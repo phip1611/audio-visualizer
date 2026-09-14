@@ -27,7 +27,7 @@ SOFTWARE.
 //! This crate does not compute spectra itself; pair it with an FFT crate such
 //! as `spectrum-analyzer`. Individual frequencies can be highlighted in the
 //! resulting chart, which is handy to verify that an expected peak is where
-//! it should be. For real-time visualization see [`crate::dynamic`].
+//! it should be. For real-time visualization see [`crate::live`].
 
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;

@@ -21,95 +21,36 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-use audio_visualizer::dynamic::live_input::{AudioDevAndCfg, list_input_devs};
-use audio_visualizer::dynamic::window_top_btm::{TransformFn, open_window_connect_audio};
-use cpal::traits::DeviceTrait;
-use ringbuffer::{AllocRingBuffer, RingBuffer};
-use std::cell::{Cell, RefCell};
-use std::io::{BufRead, stdin};
-use std::time::Instant;
+use audio_visualizer::live::{LiveVisualizer, Transform};
 
-/// Example that creates a live visualization of the audio signal power of realtime audio data
-/// **Execute this with `--release`, otherwise it is very laggy!**.
+mod common;
+
+/// Live visualization of the signal power of real-time audio.
+/// **Execute this with `--release`, otherwise it is very laggy!**
 fn main() {
-    let epoch = Cell::new(Instant::now());
-
-    let power_history: RefCell<AllocRingBuffer<(f64, f64)>> =
-        RefCell::new(AllocRingBuffer::new(2_usize.pow(12)));
-
-    // Closure that captures `visualize_spectrum`.
-    let to_power_fn = move |audio: &[f32], _sampling_rate: f32| {
-        let elapsed_s = epoch.get().elapsed().as_secs_f64();
-
-        // equals 11.6ms with 44.1kHz sampling rate or 10.7ms with 48kHz sampling rate.
-        const NUM_SAMPLES: usize = 256;
-        let skip_elements = audio.len() - NUM_SAMPLES;
-        // spectrum analysis only of the latest 46ms
-        let relevant_samples = &audio[skip_elements..];
-
-        let power_sum = relevant_samples
+    // Signal power of the latest ~12ms (at 44.1kHz), computed over the whole
+    // audio history so the curve scrolls from right (now) to left (past).
+    let to_power = |samples: &[f32], sample_rate: f32| {
+        const WINDOW: usize = 512;
+        let (chunks, _) = samples.as_chunks::<WINDOW>();
+        chunks
             .iter()
-            .copied()
-            .map(|x| x * x)
-            .fold(0.0, |acc, val| acc + val as f64);
-        let power = power_sum / relevant_samples.len() as f64;
-
-        let mut power_history = power_history.borrow_mut();
-        let mut power_history_vec = power_history.to_vec();
-        power_history_vec.iter_mut().for_each(|(time, _val)| {
-            *time -= elapsed_s;
-        });
-        power_history_vec.push((0.0 - 0.01, power));
-        power_history.extend(power_history_vec.clone());
-        /*loop {
-            match power_history.iter_mut().next() {
-                None => break,
-                Some((time, _val)) => {
-                    dbg!("WAH");
-                    *time -= elapsed_s;
-                }
-            }
-        }
-        dbg!("WAH");
-        power_history.push((0.0, power));*/
-
-        epoch.replace(Instant::now());
-        power_history_vec
+            .enumerate()
+            .map(|(i, chunk)| {
+                let power = chunk.iter().map(|s| (*s as f64).powi(2)).sum::<f64>() / WINDOW as f64;
+                let time = ((i + 1) * WINDOW) as f64 / sample_rate as f64
+                    - samples.len() as f64 / sample_rate as f64;
+                (time, power)
+            })
+            .collect::<Vec<_>>()
     };
 
-    let in_dev = select_input_dev();
-    open_window_connect_audio(
-        "Live Spectrum View",
-        None,
-        None,
-        // 0.0..22050.0_f64.log(100.0),
-        Some(-5.9..0.0),
-        Some(0.0..0.25),
-        "x-axis",
-        "y-axis",
-        AudioDevAndCfg::new(Some(in_dev), None),
-        TransformFn::Complex(&to_power_fn),
-    );
-}
-
-/// Helps to select an input device.
-fn select_input_dev() -> cpal::Device {
-    let mut devs = list_input_devs();
-    assert!(!devs.is_empty(), "no input devices found!");
-    if devs.len() == 1 {
-        return devs.remove(0).1;
-    }
-    println!();
-    devs.iter().enumerate().for_each(|(i, (name, dev))| {
-        println!(
-            "  [{}] {} {:?}",
-            i,
-            name,
-            dev.default_input_config().unwrap()
-        );
-    });
-    let mut input = String::new();
-    stdin().lock().read_line(&mut input).unwrap();
-    let index = input[0..1].parse::<usize>().unwrap();
-    devs.remove(index).1
+    let input = common::select_input();
+    LiveVisualizer::new(Transform::points(to_power))
+        .title("Live Signal Power View")
+        .axis_labels("time (seconds)", "signal power")
+        .y_range(0.0..0.25)
+        .input(input)
+        .open()
+        .unwrap();
 }

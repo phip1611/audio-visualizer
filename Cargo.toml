@@ -1,13 +1,14 @@
 [package]
 name = "audio-visualizer"
 description = """
-Audio visualization library for developers: quickly check audio samples
-visually, e.g. while working on audio algorithms.
+Audio visualization library for developers: visually check audio samples, e.g.
+as waveform or spectrum, either as static PNG/SVG image or live in a real-time
+GUI window.
 """
-version = "0.6.0"
+version = "0.7.0"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2024"
-rust-version = "1.88.0"
+rust-version = "1.95"
 keywords = ["audio", "visualizer", "waveform", "spectrum"]
 categories = ["multimedia::audio", "development-tools"]
 readme = "README.md"
@@ -21,13 +22,13 @@ exclude = [
 ]
 
 [dependencies]
+# static chart rendering (PNG/SVG)
 charts-rs = { version = "1.0", features = ["png"] }
-# faster compilation: remove unnecessary features
-plotters = { version = "0.3", features = ["bitmap_backend", "line_series"] }
-plotters-bitmap = "0.3"
-ringbuffer = "0.16"
+# live visualization: audio recording + GUI window with plots
 cpal = "0.18"
-minifb = "0.28" # gui window
+eframe = "0.36"
+egui_plot = "0.37"
+ringbuffer = "0.16"
 
 [dev-dependencies]
 lowpass-filter = "0.5"
