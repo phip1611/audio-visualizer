@@ -76,7 +76,6 @@ dependencies = [
  "minifb",
  "plotters",
  "plotters-bitmap",
- "png 0.18.1",
  "ringbuffer",
  "spectrum-analyzer",
  "symphonia",
