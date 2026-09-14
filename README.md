@@ -72,18 +72,18 @@ LiveVisualizer::new(Transform::waveform(|samples, sample_rate| {
 The GIFs below were recorded with the previous minifb-based UI; the current
 egui-based UI shows the same content with nicer axes.
 
-#### Real-time audio + lowpass filter (6.9MB GIF)
+#### Real-time audio + lowpass filter
 
 ![Example visualization of real-time audio + lowpass filter](res/live_demo_lowpass_filter_green_day_holiday.gif "Example visualization of real-time audio + lowpass filter") \
 On the top you see the original waveform of the song Holiday by Green Day.
 On the bottom you see the data after a lowpass filter was applied. The beats
 are visible.
 
-#### Real-time audio + frequency spectrum (5.4MB GIF)
+#### Real-time audio + frequency spectrum
 
 ![Example visualization of real-time audio + spectrum analysis](res/live_demo_spectrum_green_day_holiday.gif "Example visualization of real-time audio + spectrum analysis") \
 On the top you see the original waveform of the song Holiday by Green Day.
-On the bottom you see the frequency spectrum of the latest 46ms of audio.
+On the bottom you see the frequency spectrum of the latest ~46ms of audio.
 Frequencies <2000Hz are clearly present.
 
 ## MSRV
