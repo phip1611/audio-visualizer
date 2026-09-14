@@ -46,4 +46,4 @@ jobs:
       - name: Clippy
         run: cargo clippy --all-targets
       - name: Rustdoc (default feature)
-        run: cargo doc
+        run: cargo doc --document-private-items --no-deps
