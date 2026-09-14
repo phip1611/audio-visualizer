@@ -5,7 +5,7 @@ Audio visualization library for developers: visually check audio samples, e.g.
 as waveform or spectrum, either as static PNG/SVG image or live in a real-time
 GUI window.
 """
-version = "0.7.0"
+version = "0.6.0"
 authors = ["Philipp Schuster <phip1611@gmail.com>"]
 edition = "2024"
 rust-version = "1.95"

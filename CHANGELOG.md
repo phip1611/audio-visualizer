@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased (v0.7.0)
+## Unreleased
+
+## v0.6.0 (2026-09-14)
 
 Complete overhaul of the crate: same functionality, new API, new rendering
-stacks.
+stacks. Nicer visualizations.
 
 - **BREAKING** all functionality works on mono `f32` samples (amplitudes in
   `[-1.0, 1.0]`); the `Channels`/`ChannelInterleavement` enums are replaced
