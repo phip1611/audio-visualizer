@@ -24,9 +24,10 @@ SOFTWARE.
 //! Static waveform visualization: render mono audio samples to a PNG file or
 //! SVG string via [`Waveform`].
 
-use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
+use crate::chart::{ensure_finite_and_non_empty, new_line_chart, set_y_range, write_png};
 use crate::error::Error;
 use charts_rs::{LineChart, Series};
+use std::ops::Range;
 use std::path::Path;
 
 /// Upper bound of chart points; roughly one point per horizontal pixel of the
@@ -137,11 +138,15 @@ impl<'a> Waveform<'a> {
             self.height,
             &self.title,
         );
+        set_y_range(&mut chart, &self.y_axis_range());
+        Ok(chart)
+    }
+
+    /// The peak amplitude, mirrored around zero.
+    fn y_axis_range(&self) -> Range<f32> {
         let max_abs = self.samples.iter().fold(0.0_f32, |acc, s| acc.max(s.abs()));
         let y_max = if max_abs == 0.0 { 1.0 } else { max_abs };
-        chart.y_axis_configs[0].axis_min = Some(-y_max);
-        chart.y_axis_configs[0].axis_max = Some(y_max);
-        Ok(chart)
+        -y_max..y_max
     }
 
     fn x_label(&self, sample_index: usize) -> String {
@@ -206,7 +211,30 @@ fn bucket_of(index: usize, bucket_len: usize, samples: &[f32]) -> Bucket {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chart::numeric_labels;
     use crate::tests::testutil::TEST_OUT_DIR;
+
+    fn full_scale_sine() -> Vec<f32> {
+        (0..44100)
+            .map(|i| (i as f32 / 44100.0 * 2.0 * std::f32::consts::PI * 100.0).sin())
+            .collect()
+    }
+
+    fn y_axis_bounds(svg: &str) -> (f32, f32) {
+        let labels = numeric_labels(svg);
+        let min = labels.iter().copied().fold(f32::MAX, f32::min);
+        let max = labels.iter().copied().fold(f32::MIN, f32::max);
+        (min, max)
+    }
+
+    #[test]
+    fn auto_y_axis_is_symmetric_around_zero() {
+        let svg = Waveform::new(&full_scale_sine())
+            .sample_rate(44100.0)
+            .to_svg()
+            .unwrap();
+        assert_eq!(y_axis_bounds(&svg), (-1.0, 1.0));
+    }
 
     #[test]
     fn envelope_keeps_peaks() {
@@ -237,10 +265,7 @@ mod tests {
 
     #[test]
     fn writes_png_file() {
-        let samples = (0..44100)
-            .map(|i| (i as f32 / 44100.0 * 2.0 * std::f32::consts::PI * 100.0).sin())
-            .collect::<Vec<_>>();
-        Waveform::new(&samples)
+        Waveform::new(&full_scale_sine())
             .sample_rate(44100.0)
             .title("100 Hz sine wave")
             .write_png(format!("{TEST_OUT_DIR}/waveform_sine_100hz.png"))

@@ -5,6 +5,9 @@
 - **BREAKING**: `spectrum::Spectrum` is now exported as `SpectrumVisualizer`
 - **BREAKING**: `waveform::Waveform` is now exported as `WaveformVisualizer`
 - Added `SpectrumVisualizer::highlights()`
+- Fixed the y-axis of the static visualizations, which extended past the
+  data instead of ending at it: a full-scale waveform was drawn on a
+  `-1.0..1.4` axis, a spectrum peaking at 140 on a `0..150` axis
 
 ## v0.6.0 (2026-09-14)
 

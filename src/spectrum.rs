@@ -24,9 +24,10 @@ SOFTWARE.
 //! Static frequency spectrum visualization: render `(frequency, magnitude)`
 //! pairs to a PNG file or SVG string via [`Spectrum`].
 
-use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
+use crate::chart::{ensure_finite_and_non_empty, new_line_chart, set_y_range, write_png};
 use crate::error::Error;
 use charts_rs::{LineChart, Series};
+use std::ops::Range;
 use std::path::Path;
 
 /// Builder that renders a frequency spectrum as an image.
@@ -138,11 +139,20 @@ impl<'a> Spectrum<'a> {
 
         let mut chart = new_line_chart(series_list, x_labels, self.width, self.height, &self.title);
         chart.series_colors[1] = (255, 0, 0).into();
-        let max_magnitude = data.iter().fold(0.0_f32, |acc, (_, m)| acc.max(*m));
-        chart.y_axis_configs[0].axis_min = Some(0.0);
-        chart.y_axis_configs[0].axis_max = Some(max_magnitude);
+        set_y_range(&mut chart, &y_axis_range(&data));
         Ok(chart)
     }
+}
+
+/// Zero to the largest magnitude. Negative magnitudes, e.g. in dB, extend
+/// the range downwards, which is what the chart showed before as well.
+fn y_axis_range(data: &[(f32, f32)]) -> Range<f32> {
+    let (min, max) = data.iter().fold((0.0_f32, 0.0_f32), |(lo, hi), (_, m)| {
+        (lo.min(*m), hi.max(*m))
+    });
+    // silence: all magnitudes are zero, keep a visible axis anyway
+    let max = if max == min { 1.0 } else { max };
+    min..max
 }
 
 /// Overlay series that is `None` everywhere except a short segment around
@@ -177,6 +187,7 @@ fn format_frequency(frequency_hz: f32) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chart::numeric_labels;
     use crate::tests::testutil::TEST_OUT_DIR;
 
     /// The old hardcoded example spectrum with a peak at 60 Hz.
@@ -213,6 +224,14 @@ mod tests {
         assert_eq!(overlay[7], Some(140.0));
         assert_eq!(overlay[8], Some(130.0));
         assert_eq!(overlay.iter().filter(|v| v.is_some()).count(), 3);
+    }
+
+    #[test]
+    fn auto_y_axis_ends_at_the_peak() {
+        let svg = Spectrum::new(&peak_60hz_spectrum()).to_svg().unwrap();
+        // the frequency labels are numeric too, but all below the peak
+        let max_label = numeric_labels(&svg).into_iter().fold(f32::MIN, f32::max);
+        assert_eq!(max_label, 140.0);
     }
 
     #[test]
