@@ -22,8 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use crate::test_util::decode_mp3;
+use audio_visualizer::WaveformVisualizer;
 use audio_visualizer::deinterleave_stereo;
-use audio_visualizer::waveform::Waveform;
 use std::path::Path;
 
 #[allow(unused)]
@@ -35,8 +35,9 @@ fn main() {
     let (left, right) = deinterleave_stereo(&lrlr_mp3_samples);
 
     for (samples, name) in [(left, "left"), (right, "right")] {
-        Waveform::new(&samples)
+        WaveformVisualizer::new(&samples)
             .sample_rate(44100.0)
+            .y_range(-1.0..1.0)
             .title(format!("sample_1.mp3 ({name} channel)"))
             .write_png(format!("target/test_out/sample_1_waveform_{name}.png"))
             .unwrap();

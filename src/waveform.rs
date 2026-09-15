@@ -23,24 +23,13 @@ SOFTWARE.
 */
 //! Static waveform visualization: render mono audio samples to a PNG file or
 //! SVG string via [`Waveform`].
-//!
-//! # What the image shows
-//!
-//! An image is far narrower than the audio is long: one second at 44.1 kHz
-//! is dozens of samples per pixel column already. A column therefore shows
-//! the range from the smallest to the largest sample it covers - the shape
-//! is the peak amplitude over time, and the oscillation within a column is
-//! deliberately not resolved.
-//!
-//! Drawing a line through every n-th sample instead would undersample the
-//! signal by orders of magnitude: peaks between two picked samples vanish,
-//! and what is left aliases into a pattern that is not in the audio.
-//!
-//! For real-time visualization see [`crate::live`].
 
-use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
+use crate::chart::{
+    ensure_finite_and_non_empty, ensure_valid_y_range, new_line_chart, set_y_range, write_png,
+};
 use crate::error::Error;
 use charts_rs::{LineChart, Series};
+use std::ops::Range;
 use std::path::Path;
 
 /// Upper bound of chart points; roughly one point per horizontal pixel of the
@@ -50,16 +39,31 @@ const MAX_POINTS: usize = 1200;
 /// Builder that renders mono audio samples as a waveform image.
 ///
 /// Samples are expected as amplitudes in `[-1.0, 1.0]`, the usual DSP
-/// convention; other symmetric ranges work too since the y-axis scales to the
-/// data. For interleaved stereo data, split it with
-/// [`crate::deinterleave_stereo`] first and render each channel separately.
+/// convention; other symmetric ranges work too since the y-axis fits the
+/// data unless [`Self::y_range`] fixes it. For interleaved stereo data, split
+/// it with [`crate::deinterleave_stereo`] first and render each channel
+/// separately.
+///
+/// # What the image shows
+///
+/// An image is far narrower than the audio is long: one second at 44.1 kHz
+/// is dozens of samples per pixel column already. A column therefore shows
+/// the range from the smallest to the largest sample it covers - the shape
+/// is the peak amplitude over time, and the oscillation within a column is
+/// deliberately not resolved.
+///
+/// Drawing a line through every n-th sample instead would undersample the
+/// signal by orders of magnitude: peaks between two picked samples vanish,
+/// and what is left aliases into a pattern that is not in the audio.
+///
+/// For real-time visualization see [`crate::live`].
 ///
 /// # Example
 /// ```no_run
-/// use audio_visualizer::waveform::Waveform;
+/// use audio_visualizer::WaveformVisualizer;
 ///
 /// let samples: Vec<f32> = vec![0.0, 0.5, -0.5, 0.3];
-/// Waveform::new(&samples)
+/// WaveformVisualizer::new(&samples)
 ///     .sample_rate(44100.0)
 ///     .write_png("waveform.png")
 ///     .unwrap();
@@ -68,6 +72,7 @@ const MAX_POINTS: usize = 1200;
 pub struct Waveform<'a> {
     samples: &'a [f32],
     sample_rate: Option<f32>,
+    y_range: Option<Range<f32>>,
     width: u32,
     height: u32,
     title: String,
@@ -80,6 +85,7 @@ impl<'a> Waveform<'a> {
         Self {
             samples,
             sample_rate: None,
+            y_range: None,
             width: 1400,
             height: 400,
             title: String::new(),
@@ -90,6 +96,17 @@ impl<'a> Waveform<'a> {
     #[must_use]
     pub const fn sample_rate(mut self, sample_rate_hz: f32) -> Self {
         self.sample_rate = Some(sample_rate_hz);
+        self
+    }
+
+    /// Fixes the y-axis to the given range instead of fitting it to the
+    /// data. Amplitudes outside the range are clipped to its bounds.
+    ///
+    /// This makes images of different signals comparable: with `-1.0..1.0`,
+    /// every image shows the full scale of `[-1.0, 1.0]` samples.
+    #[must_use]
+    pub const fn y_range(mut self, range: Range<f32>) -> Self {
+        self.y_range = Some(range);
         self
     }
 
@@ -121,11 +138,19 @@ impl<'a> Waveform<'a> {
 
     fn chart(&self) -> Result<LineChart, Error> {
         ensure_finite_and_non_empty(self.samples.iter().copied())?;
+        let y_range = self.y_axis_range()?;
+        let clip = |amplitude: f32| amplitude.clamp(y_range.start, y_range.end);
 
         let buckets = envelope(self.samples, MAX_POINTS);
         let x_labels = buckets.iter().map(|b| self.x_label(b.start)).collect();
-        let mut upper = Series::new("upper".to_string(), buckets.iter().map(|b| b.max).collect());
-        let mut lower = Series::new("lower".to_string(), buckets.iter().map(|b| b.min).collect());
+        let mut upper = Series::new(
+            "upper".to_string(),
+            buckets.iter().map(|b| clip(b.max)).collect(),
+        );
+        let mut lower = Series::new(
+            "lower".to_string(),
+            buckets.iter().map(|b| clip(b.min)).collect(),
+        );
         // Same palette slot: both envelope halves should look like one shape.
         upper.index = Some(0);
         lower.index = Some(0);
@@ -137,11 +162,19 @@ impl<'a> Waveform<'a> {
             self.height,
             &self.title,
         );
+        set_y_range(&mut chart, &y_range);
+        Ok(chart)
+    }
+
+    /// The fixed range, or the peak amplitude mirrored around zero.
+    fn y_axis_range(&self) -> Result<Range<f32>, Error> {
+        if let Some(range) = &self.y_range {
+            ensure_valid_y_range(range)?;
+            return Ok(range.clone());
+        }
         let max_abs = self.samples.iter().fold(0.0_f32, |acc, s| acc.max(s.abs()));
         let y_max = if max_abs == 0.0 { 1.0 } else { max_abs };
-        chart.y_axis_configs[0].axis_min = Some(-y_max);
-        chart.y_axis_configs[0].axis_max = Some(y_max);
-        Ok(chart)
+        Ok(-y_max..y_max)
     }
 
     fn x_label(&self, sample_index: usize) -> String {
@@ -206,7 +239,55 @@ fn bucket_of(index: usize, bucket_len: usize, samples: &[f32]) -> Bucket {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chart::numeric_labels;
     use crate::tests::testutil::TEST_OUT_DIR;
+
+    fn full_scale_sine() -> Vec<f32> {
+        (0..44100)
+            .map(|i| (i as f32 / 44100.0 * 2.0 * std::f32::consts::PI * 100.0).sin())
+            .collect()
+    }
+
+    fn y_axis_bounds(svg: &str) -> (f32, f32) {
+        let labels = numeric_labels(svg);
+        let min = labels.iter().copied().fold(f32::MAX, f32::min);
+        let max = labels.iter().copied().fold(f32::MIN, f32::max);
+        (min, max)
+    }
+
+    #[test]
+    fn auto_y_axis_is_symmetric_around_zero() {
+        let svg = Waveform::new(&full_scale_sine())
+            .sample_rate(44100.0)
+            .to_svg()
+            .unwrap();
+        assert_eq!(y_axis_bounds(&svg), (-1.0, 1.0));
+    }
+
+    #[test]
+    fn y_range_fixes_the_axis_exactly() {
+        // Both ranges clip the signal, so the data touches the bounds. The
+        // second one also has a positive lower bound. Labels have one
+        // decimal, so the bounds must be representable that way.
+        for range in [-0.5..0.5, 0.2..1.0] {
+            let svg = Waveform::new(&full_scale_sine())
+                .sample_rate(44100.0)
+                .y_range(range.clone())
+                .to_svg()
+                .unwrap();
+            assert_eq!(y_axis_bounds(&svg), (range.start, range.end));
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_y_range() {
+        for range in [1.0..0.0, 0.0..0.0, f32::NAN..1.0, 0.0..f32::INFINITY] {
+            assert!(matches!(
+                Waveform::new(&[0.0]).y_range(range).to_svg(),
+                Err(Error::InvalidData(_))
+            ));
+        }
+    }
 
     #[test]
     fn envelope_keeps_peaks() {
@@ -237,10 +318,7 @@ mod tests {
 
     #[test]
     fn writes_png_file() {
-        let samples = (0..44100)
-            .map(|i| (i as f32 / 44100.0 * 2.0 * std::f32::consts::PI * 100.0).sin())
-            .collect::<Vec<_>>();
-        Waveform::new(&samples)
+        Waveform::new(&full_scale_sine())
             .sample_rate(44100.0)
             .title("100 Hz sine wave")
             .write_png(format!("{TEST_OUT_DIR}/waveform_sine_100hz.png"))
