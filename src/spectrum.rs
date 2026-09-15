@@ -23,11 +23,6 @@ SOFTWARE.
 */
 //! Static frequency spectrum visualization: render `(frequency, magnitude)`
 //! pairs to a PNG file or SVG string via [`Spectrum`].
-//!
-//! This crate does not compute spectra itself; pair it with an FFT crate such
-//! as `spectrum-analyzer`. Individual frequencies can be highlighted in the
-//! resulting chart, which is handy to verify that an expected peak is where
-//! it should be. For real-time visualization see [`crate::live`].
 
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;
@@ -39,6 +34,11 @@ use std::path::Path;
 /// Input is a list of `(frequency in Hz, magnitude)` pairs; it does not need
 /// to be sorted. The x-axis is labeled with the frequencies, the y-axis
 /// ranges from zero to the largest magnitude.
+///
+/// This crate does not compute spectra itself; pair it with an FFT crate such
+/// as `spectrum-analyzer`. Individual frequencies can be highlighted in the
+/// resulting chart, which is handy to verify that an expected peak is where
+/// it should be. For real-time visualization see [`crate::live`].
 ///
 /// # Example
 /// ```no_run

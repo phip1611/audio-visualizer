@@ -23,20 +23,6 @@ SOFTWARE.
 */
 //! Static waveform visualization: render mono audio samples to a PNG file or
 //! SVG string via [`Waveform`].
-//!
-//! # What the image shows
-//!
-//! An image is far narrower than the audio is long: one second at 44.1 kHz
-//! is dozens of samples per pixel column already. A column therefore shows
-//! the range from the smallest to the largest sample it covers - the shape
-//! is the peak amplitude over time, and the oscillation within a column is
-//! deliberately not resolved.
-//!
-//! Drawing a line through every n-th sample instead would undersample the
-//! signal by orders of magnitude: peaks between two picked samples vanish,
-//! and what is left aliases into a pattern that is not in the audio.
-//!
-//! For real-time visualization see [`crate::live`].
 
 use crate::chart::{ensure_finite_and_non_empty, new_line_chart, write_png};
 use crate::error::Error;
@@ -53,6 +39,20 @@ const MAX_POINTS: usize = 1200;
 /// convention; other symmetric ranges work too since the y-axis scales to the
 /// data. For interleaved stereo data, split it with
 /// [`crate::deinterleave_stereo`] first and render each channel separately.
+///
+/// # What the image shows
+///
+/// An image is far narrower than the audio is long: one second at 44.1 kHz
+/// is dozens of samples per pixel column already. A column therefore shows
+/// the range from the smallest to the largest sample it covers - the shape
+/// is the peak amplitude over time, and the oscillation within a column is
+/// deliberately not resolved.
+///
+/// Drawing a line through every n-th sample instead would undersample the
+/// signal by orders of magnitude: peaks between two picked samples vanish,
+/// and what is left aliases into a pattern that is not in the audio.
+///
+/// For real-time visualization see [`crate::live`].
 ///
 /// # Example
 /// ```no_run
