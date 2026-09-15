@@ -80,7 +80,20 @@ pub(crate) fn ensure_finite_and_non_empty(
     Ok(())
 }
 
-/// Fixes the y-axis of `chart` to `range`.
+/// Rejects a y-axis range that is empty or has non-finite bounds with a
+/// descriptive [`Error::InvalidData`].
+pub(crate) fn ensure_valid_y_range(range: &Range<f32>) -> Result<(), Error> {
+    if !range.start.is_finite() || !range.end.is_finite() || range.start >= range.end {
+        return Err(Error::InvalidData(format!(
+            "y range {range:?} must be finite and non-empty"
+        )));
+    }
+    Ok(())
+}
+
+/// Fixes the y-axis of `chart` to `range`. Clip the data to the same range
+/// before calling this, otherwise points outside it are drawn past the end
+/// of the axis.
 ///
 /// charts-rs treats a fixed bound as a suggestion: it only applies one that
 /// lies strictly outside the data. Handing it the exact data range therefore

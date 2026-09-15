@@ -8,6 +8,8 @@
 - Fixed the y-axis of the static visualizations, which extended past the
   data instead of ending at it: a full-scale waveform was drawn on a
   `-1.0..1.4` axis, a spectrum peaking at 140 on a `0..150` axis
+- Added `WaveformVisualizer::y_range()` and `SpectrumVisualizer::y_range()`
+  to fix the y-axis instead of fitting it to the data
 
 ## v0.6.0 (2026-09-14)
 

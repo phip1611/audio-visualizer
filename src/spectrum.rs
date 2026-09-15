@@ -24,7 +24,9 @@ SOFTWARE.
 //! Static frequency spectrum visualization: render `(frequency, magnitude)`
 //! pairs to a PNG file or SVG string via [`Spectrum`].
 
-use crate::chart::{ensure_finite_and_non_empty, new_line_chart, set_y_range, write_png};
+use crate::chart::{
+    ensure_finite_and_non_empty, ensure_valid_y_range, new_line_chart, set_y_range, write_png,
+};
 use crate::error::Error;
 use charts_rs::{LineChart, Series};
 use std::ops::Range;
@@ -34,7 +36,8 @@ use std::path::Path;
 ///
 /// Input is a list of `(frequency in Hz, magnitude)` pairs; it does not need
 /// to be sorted. The x-axis is labeled with the frequencies, the y-axis
-/// ranges from zero to the largest magnitude.
+/// ranges from zero to the largest magnitude unless [`Self::y_range`] fixes
+/// it.
 ///
 /// This crate does not compute spectra itself; pair it with an FFT crate such
 /// as `spectrum-analyzer`. Individual frequencies can be highlighted in the
@@ -55,6 +58,7 @@ use std::path::Path;
 pub struct Spectrum<'a> {
     data: &'a [(f32, f32)],
     highlights: Vec<f32>,
+    y_range: Option<Range<f32>>,
     width: u32,
     height: u32,
     title: String,
@@ -68,6 +72,7 @@ impl<'a> Spectrum<'a> {
         Self {
             data,
             highlights: vec![],
+            y_range: None,
             width: 1400,
             height: 500,
             title: String::new(),
@@ -89,6 +94,16 @@ impl<'a> Spectrum<'a> {
         for frequency in frequencies_hz {
             self.highlights.push(*frequency);
         }
+        self
+    }
+
+    /// Fixes the y-axis to the given range instead of fitting it to the
+    /// data. Magnitudes outside the range are clipped to its bounds.
+    ///
+    /// This makes images of different spectra comparable.
+    #[must_use]
+    pub const fn y_range(mut self, range: Range<f32>) -> Self {
+        self.y_range = Some(range);
         self
     }
 
@@ -123,6 +138,10 @@ impl<'a> Spectrum<'a> {
 
         let mut data = self.data.to_vec();
         data.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let y_range = self.y_axis_range(&data)?;
+        for (_, magnitude) in &mut data {
+            *magnitude = magnitude.clamp(y_range.start, y_range.end);
+        }
 
         let x_labels = data.iter().map(|(f, _)| format_frequency(*f)).collect();
         let magnitudes = Series::new(
@@ -139,20 +158,24 @@ impl<'a> Spectrum<'a> {
 
         let mut chart = new_line_chart(series_list, x_labels, self.width, self.height, &self.title);
         chart.series_colors[1] = (255, 0, 0).into();
-        set_y_range(&mut chart, &y_axis_range(&data));
+        set_y_range(&mut chart, &y_range);
         Ok(chart)
     }
-}
 
-/// Zero to the largest magnitude. Negative magnitudes, e.g. in dB, extend
-/// the range downwards, which is what the chart showed before as well.
-fn y_axis_range(data: &[(f32, f32)]) -> Range<f32> {
-    let (min, max) = data.iter().fold((0.0_f32, 0.0_f32), |(lo, hi), (_, m)| {
-        (lo.min(*m), hi.max(*m))
-    });
-    // silence: all magnitudes are zero, keep a visible axis anyway
-    let max = if max == min { 1.0 } else { max };
-    min..max
+    /// The fixed range, or zero to the largest magnitude. Negative
+    /// magnitudes, e.g. in dB, extend the range downwards.
+    fn y_axis_range(&self, data: &[(f32, f32)]) -> Result<Range<f32>, Error> {
+        if let Some(range) = &self.y_range {
+            ensure_valid_y_range(range)?;
+            return Ok(range.clone());
+        }
+        let (min, max) = data.iter().fold((0.0_f32, 0.0_f32), |(lo, hi), (_, m)| {
+            (lo.min(*m), hi.max(*m))
+        });
+        // silence: all magnitudes are zero, keep a visible axis anyway
+        let max = if max == min { 1.0 } else { max };
+        Ok(min..max)
+    }
 }
 
 /// Overlay series that is `None` everywhere except a short segment around
@@ -232,6 +255,29 @@ mod tests {
         // the frequency labels are numeric too, but all below the peak
         let max_label = numeric_labels(&svg).into_iter().fold(f32::MIN, f32::max);
         assert_eq!(max_label, 140.0);
+    }
+
+    #[test]
+    fn y_range_fixes_the_axis_and_clips() {
+        // the peak is clipped, so the data touches the upper bound
+        let data = [(1.0, 10.0), (2.0, 1000.0), (3.0, 10.0)];
+        let svg = Spectrum::new(&data).y_range(0.0..100.0).to_svg().unwrap();
+        let labels = numeric_labels(&svg);
+        // the frequency labels are numeric too, but far below the bound
+        let max_label = labels.iter().copied().fold(f32::MIN, f32::max);
+        assert_eq!(max_label, 100.0);
+        // the lower bound must be labeled "0", not "-0"
+        assert!(labels.iter().all(|l| l.is_sign_positive()), "{labels:?}");
+    }
+
+    #[test]
+    fn rejects_invalid_y_range() {
+        for range in [1.0..0.0, 0.0..0.0, f32::NAN..1.0, 0.0..f32::INFINITY] {
+            assert!(matches!(
+                Spectrum::new(&[(0.0, 0.0)]).y_range(range).to_svg(),
+                Err(Error::InvalidData(_))
+            ));
+        }
     }
 
     #[test]
