@@ -42,10 +42,10 @@ use std::path::Path;
 ///
 /// # Example
 /// ```no_run
-/// use audio_visualizer::spectrum::Spectrum;
+/// use audio_visualizer::SpectrumVisualizer;
 ///
 /// let spectrum: Vec<(f32, f32)> = vec![(55.0, 0.1), (60.0, 0.9), (65.0, 0.2)];
-/// Spectrum::new(&spectrum)
+/// SpectrumVisualizer::new(&spectrum)
 ///     .highlight(60.0)
 ///     .write_png("spectrum.png")
 ///     .unwrap();

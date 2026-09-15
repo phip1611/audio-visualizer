@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **BREAKING**: `spectrum::Spectrum` is now exported as `SpectrumVisualizer`
+- **BREAKING**: `waveform::Waveform` is now exported as `WaveformVisualizer`
+
 ## v0.6.0 (2026-09-14)
 
 Complete overhaul of the crate: same functionality, new API, new rendering

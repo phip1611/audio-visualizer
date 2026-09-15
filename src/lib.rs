@@ -28,14 +28,15 @@ SOFTWARE.
 //! `[-1.0, 1.0]`. Split interleaved stereo data with [`deinterleave_stereo`]
 //! first.
 //!
-//! - **Static images**: [`waveform::Waveform`] renders samples as
-//!   PNG file or SVG string; [`spectrum`] does the same for frequency spectra.
+//! - **Static images**: [`WaveformVisualizer`] renders samples as PNG file
+//!   or SVG string; [`SpectrumVisualizer`] does the same for frequency
+//!   spectra.
 //! - **Live visualization**: [`live`] records audio from an input device
 //!   and shows the waveform plus a custom transformation (e.g. lowpass filter
 //!   or spectrum) in a real-time GUI window.
 //!
 //! Waveforms show the min/max amplitude per pixel column rather than
-//! individual samples; [`waveform`] explains why.
+//! individual samples; [`WaveformVisualizer`] explains why.
 
 #![deny(
     clippy::all,
@@ -56,8 +57,8 @@ SOFTWARE.
 #![deny(rustdoc::all)]
 
 pub mod live;
-pub mod spectrum;
-pub mod waveform;
+mod spectrum;
+mod waveform;
 
 mod chart;
 mod error;
@@ -65,6 +66,8 @@ mod error;
 mod tests;
 
 pub use error::Error;
+pub use spectrum::Spectrum as SpectrumVisualizer;
+pub use waveform::Waveform as WaveformVisualizer;
 
 /// Splits interleaved stereo samples (left, right, left, right, ...) into a
 /// left and a right channel vector.

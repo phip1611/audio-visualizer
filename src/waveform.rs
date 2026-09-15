@@ -56,10 +56,10 @@ const MAX_POINTS: usize = 1200;
 ///
 /// # Example
 /// ```no_run
-/// use audio_visualizer::waveform::Waveform;
+/// use audio_visualizer::WaveformVisualizer;
 ///
 /// let samples: Vec<f32> = vec![0.0, 0.5, -0.5, 0.3];
-/// Waveform::new(&samples)
+/// WaveformVisualizer::new(&samples)
 ///     .sample_rate(44100.0)
 ///     .write_png("waveform.png")
 ///     .unwrap();

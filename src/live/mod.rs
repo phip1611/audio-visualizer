@@ -41,7 +41,7 @@ SOFTWARE.
 //! A waveform is drawn as a filled shape from the smallest to the largest
 //! amplitude per pixel column, not as a line through individual samples: a
 //! column covers a few hundred samples at common sample rates. See
-//! [`crate::waveform`] for why that is the right thing to show.
+//! [`crate::WaveformVisualizer`] for why that is the right thing to show.
 
 mod input;
 

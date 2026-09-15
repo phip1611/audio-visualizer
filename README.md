@@ -29,9 +29,9 @@ There are several runnable examples in the `examples/` directory.
 ### Static waveform
 
 ```rust
-use audio_visualizer::waveform::Waveform;
+use audio_visualizer::WaveformVisualizer;
 
-Waveform::new(&samples)
+WaveformVisualizer::new(&samples)
     .sample_rate(44100.0)
     .title("sample_1.mp3 (left channel)")
     .write_png("waveform.png")?;
@@ -42,7 +42,7 @@ Waveform::new(&samples)
 ### Static spectrum
 
 ```rust
-use audio_visualizer::spectrum::Spectrum;
+use audio_visualizer::SpectrumVisualizer;
 
 // spectrum: &[(f32, f32)] with (frequency in Hz, magnitude) pairs,
 // e.g. computed with the spectrum-analyzer crate
