@@ -12,6 +12,10 @@
   `-1.0..1.4` axis, a spectrum peaking at 140 on a `0..150` axis
 - Added `WaveformVisualizer::y_range()` and `SpectrumVisualizer::y_range()`
   to fix the y-axis instead of fitting it to the data
+- **BREAKING**: the live visualization needs Wayland on Linux now: `eframe`
+  is built without its default features, so the X11 backend, the
+  accessibility bridge, hyperlink support and the web screen reader are
+  gone; this shrinks the dependency tree from 299 to 204 crates
 
 ## v0.6.0 (2026-09-14)
 

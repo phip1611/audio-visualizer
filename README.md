@@ -93,3 +93,4 @@ The MSRV is 1.95.0 stable.
 
 - make sure to have these required packages installed:
   `sudo apt install libasound2-dev libxkbcommon-dev`
+- the live visualization uses Wayland; there is no X11 backend

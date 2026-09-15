@@ -26,7 +26,13 @@ exclude = [
 charts-rs = { version = "1.0", features = ["png"] }
 # live visualization: audio recording + GUI window with plots
 cpal = "0.18"
-eframe = "0.36"
+# Only the features the live window needs: no X11 (Wayland only), no
+# accessibility bridge, no web screen reader, no hyperlinks.
+eframe = { version = "0.36", default-features = false, features = [
+    "default_fonts",
+    "wayland",
+    "wgpu",
+] }
 egui_plot = "0.37"
 ringbuffer = "0.16"
 
