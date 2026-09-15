@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.7.0 (2026-09-15)
+
 - **BREAKING**: `spectrum::Spectrum` is now exported as `SpectrumVisualizer`
 - **BREAKING**: `waveform::Waveform` is now exported as `WaveformVisualizer`
 - Added `SpectrumVisualizer::highlights()`
