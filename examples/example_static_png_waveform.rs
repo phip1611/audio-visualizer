@@ -37,6 +37,7 @@ fn main() {
     for (samples, name) in [(left, "left"), (right, "right")] {
         WaveformVisualizer::new(&samples)
             .sample_rate(44100.0)
+            .y_range(-1.0..1.0)
             .title(format!("sample_1.mp3 ({name} channel)"))
             .write_png(format!("target/test_out/sample_1_waveform_{name}.png"))
             .unwrap();
