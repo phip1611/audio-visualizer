@@ -81,6 +81,16 @@ impl<'a> Spectrum<'a> {
         self
     }
 
+    /// Highlights the spectrum entry closest to the given frequencies with a
+    /// red marker. Can be called multiple times.
+    #[must_use]
+    pub fn highlights(mut self, frequencies_hz: &[f32]) -> Self {
+        for frequency in frequencies_hz {
+            self.highlights.push(*frequency);
+        }
+        self
+    }
+
     /// Sets the image dimensions in pixels. Default: 1400x500.
     #[must_use]
     pub const fn size(mut self, width: u32, height: u32) -> Self {
