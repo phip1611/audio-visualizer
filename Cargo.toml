@@ -38,7 +38,7 @@ ringbuffer = "0.16"
 
 [dev-dependencies]
 lowpass-filter = "0.5"
-spectrum-analyzer = "1.9"
+spectrum-analyzer = "2.0"
 symphonia = { version = "0.6", default-features = false, features = ["mp3"] }
 
 # otherwise FFT and other code is too slow

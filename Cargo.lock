@@ -2602,9 +2602,9 @@ dependencies = [
 
 [[package]]
 name = "spectrum-analyzer"
-version = "1.9.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a21adaa2ad6e1a959b23fed9434dec00106597f13c509e8d7ffdfdc84b34f49c"
+checksum = "463196b490e0a1c7e6b5d3c73b9db779e6f0ea544e849bc8e2702717c17a9716"
 dependencies = [
  "float-cmp 0.10.0",
  "libm",
