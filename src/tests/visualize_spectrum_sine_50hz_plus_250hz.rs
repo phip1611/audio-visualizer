@@ -35,7 +35,7 @@ fn visualize_spectrum_sine_50hz_plus_250hz() {
 
     let window = hann_window(&audio[0..4096]);
     let spectrum =
-        samples_fft_to_spectrum(&window, sampling_rate, FrequencyLimit::Max(400.0), None).unwrap();
+        samples_fft_to_spectrum(&window, sampling_rate, FrequencyLimit::max(400.0), None).unwrap();
     let data = spectrum
         .data()
         .iter()
