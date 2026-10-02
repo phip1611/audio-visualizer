@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `WaveformVisualizer` looks like a waveform in an audio editor such as
+  Audacity: each pixel column is a filled bar from the smallest to the
+  largest sample instead of two separate min/max lines, and the axes are
+  labeled at round values
+
 ## v0.7.0 (2026-09-15)
 
 - **BREAKING**: `spectrum::Spectrum` is now exported as `SpectrumVisualizer`

@@ -24,17 +24,25 @@ SOFTWARE.
 //! Static waveform visualization: render mono audio samples to a PNG file or
 //! SVG string via [`Waveform`].
 
-use crate::chart::{
-    ensure_finite_and_non_empty, ensure_valid_y_range, new_line_chart, set_y_range, write_png,
-};
+use crate::chart::{ensure_finite_and_non_empty, ensure_valid_y_range, write_png};
 use crate::error::Error;
-use charts_rs::{LineChart, Series};
+use charts_rs::{DEFAULT_FONT_FAMILY, measure_text_width_family};
 use std::ops::Range;
 use std::path::Path;
 
-/// Upper bound of chart points; roughly one point per horizontal pixel of the
-/// default image width.
-const MAX_POINTS: usize = 1200;
+// Colors and font sizes of the charts-rs light theme, so that waveform and
+// spectrum images look alike.
+const PEAK_COLOR: &str = "#5470c6";
+const GRID_COLOR: &str = "#e0e6f2";
+const AXIS_COLOR: &str = "#6e7079";
+const TITLE_COLOR: &str = "#464646";
+const FONT_SIZE: f32 = 14.0;
+const TITLE_FONT_SIZE: f32 = 18.0;
+
+/// Minimum distances between two axis ticks in pixels, so that the labels
+/// do not crowd.
+const MIN_X_TICK_SPACING: f32 = 80.0;
+const MIN_Y_TICK_SPACING: f32 = 50.0;
 
 /// Builder that renders mono audio samples as a waveform image.
 ///
@@ -47,10 +55,10 @@ const MAX_POINTS: usize = 1200;
 /// # What the image shows
 ///
 /// An image is far narrower than the audio is long: one second at 44.1 kHz
-/// is dozens of samples per pixel column already. A column therefore shows
-/// the range from the smallest to the largest sample it covers - the shape
-/// is the peak amplitude over time, and the oscillation within a column is
-/// deliberately not resolved.
+/// is dozens of samples per pixel column already. A column therefore is a
+/// filled bar from the smallest to the largest sample it covers, as in audio
+/// editors such as Audacity - the shape is the peak amplitude over time, and
+/// the oscillation within a column is deliberately not resolved.
 ///
 /// Drawing a line through every n-th sample instead would undersample the
 /// signal by orders of magnitude: peaks between two picked samples vanish,
@@ -127,7 +135,86 @@ impl<'a> Waveform<'a> {
 
     /// Renders the waveform to an SVG string.
     pub fn to_svg(&self) -> Result<String, Error> {
-        Ok(self.chart()?.svg()?)
+        ensure_finite_and_non_empty(self.samples.iter().copied())?;
+        let samples_per_unit = self.samples_per_unit();
+        let y_range = self.y_axis_range()?;
+
+        let top = if self.title.is_empty() { 12.0 } else { 40.0 };
+        let plot_height = self.height as f32 - top - 32.0;
+        let y_ticks = ticks(&y_range, plot_height / MIN_Y_TICK_SPACING, "");
+        let mut label_width = 0.0_f32;
+        for (_, label) in &y_ticks {
+            let size = measure_text_width_family(DEFAULT_FONT_FAMILY, FONT_SIZE, label)?;
+            label_width = label_width.max(size.width());
+        }
+        // Whole pixels, so that every column of the waveform is exactly one
+        // pixel wide.
+        let left = (label_width + 16.0).round();
+        let plot = Plot {
+            left,
+            top,
+            width: self.width as f32 - left - 24.0,
+            height: plot_height,
+            len: self.samples.len(),
+            y_range,
+        };
+        let x_range = 0.0..self.samples.len() as f32 / samples_per_unit;
+        let x_unit = if self.sample_rate.is_some() { "s" } else { "" };
+        let x_ticks = ticks(&x_range, plot.width / MIN_X_TICK_SPACING, x_unit);
+
+        let (width, height) = (self.width, self.height);
+        let (right, bottom) = (plot.left + plot.width, plot.bottom());
+        let mut svg = format!(
+            r#"<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" font-family="{DEFAULT_FONT_FAMILY}" font-size="{FONT_SIZE}">"#
+        );
+        svg.push_str(r#"<rect width="100%" height="100%" fill="white"/>"#);
+        if !self.title.is_empty() {
+            svg.push_str(&format!(
+                r#"<text x="{}" y="26" text-anchor="middle" font-size="{TITLE_FONT_SIZE}" fill="{TITLE_COLOR}">{}</text>"#,
+                width as f32 / 2.0,
+                self.title,
+            ));
+        }
+        // Grid, waveform and axis are aligned to pixels; anti-aliasing
+        // would only blur them.
+        svg.push_str(r#"<g shape-rendering="crispEdges">"#);
+        for (value, _) in &y_ticks {
+            let y = plot.y(*value);
+            svg.push_str(&format!(
+                r#"<line x1="{left}" x2="{right}" y1="{y}" y2="{y}" stroke="{GRID_COLOR}"/>"#
+            ));
+        }
+        svg.push_str(&format!(
+            r#"<path d="{}" fill="{PEAK_COLOR}"/>"#,
+            self.peak_path(&plot)
+        ));
+        svg.push_str(&format!(
+            r#"<line x1="{left}" x2="{right}" y1="{bottom}" y2="{bottom}" stroke="{AXIS_COLOR}"/>"#
+        ));
+        for (value, _) in &x_ticks {
+            let x = plot.x(value * samples_per_unit);
+            let tick_end = bottom + 5.0;
+            svg.push_str(&format!(
+                r#"<line x1="{x}" x2="{x}" y1="{bottom}" y2="{tick_end}" stroke="{AXIS_COLOR}"/>"#
+            ));
+        }
+        svg.push_str("</g>");
+        for (value, label) in &y_ticks {
+            svg.push_str(&format!(
+                r#"<text x="{}" y="{}" text-anchor="end" fill="{AXIS_COLOR}">{label}</text>"#,
+                left - 8.0,
+                plot.y(*value) + FONT_SIZE * 0.35,
+            ));
+        }
+        for (value, label) in &x_ticks {
+            svg.push_str(&format!(
+                r#"<text x="{}" y="{}" text-anchor="middle" fill="{AXIS_COLOR}">{label}</text>"#,
+                plot.x(value * samples_per_unit),
+                bottom + 8.0 + FONT_SIZE,
+            ));
+        }
+        svg.push_str("</svg>");
+        Ok(svg)
     }
 
     /// Renders the waveform and writes it as PNG file, creating missing
@@ -136,34 +223,35 @@ impl<'a> Waveform<'a> {
         write_png(&self.to_svg()?, path.as_ref())
     }
 
-    fn chart(&self) -> Result<LineChart, Error> {
-        ensure_finite_and_non_empty(self.samples.iter().copied())?;
-        let y_range = self.y_axis_range()?;
-        let clip = |amplitude: f32| amplitude.clamp(y_range.start, y_range.end);
+    /// One filled column per pixel from the smallest to the largest sample
+    /// it covers, as a single SVG path.
+    fn peak_path(&self, plot: &Plot) -> String {
+        let buckets = envelope(self.samples, plot.width as usize);
+        let mut path = String::new();
+        for (i, bucket) in buckets.iter().enumerate() {
+            let end = buckets.get(i + 1).map_or(self.samples.len(), |b| b.start);
+            // The column also covers the step to the next column's first
+            // sample. Otherwise, the columns of a steep signal float apart,
+            // as each one only covers its own samples.
+            let next = self.samples.get(end).copied();
+            let min = next.map_or(bucket.min, |n| bucket.min.min(n));
+            let max = next.map_or(bucket.max, |n| bucket.max.max(n));
+            let (top, bottom) = (plot.y(max), plot.y(min));
+            // At least one pixel high, so that silence remains visible.
+            let pad = ((1.0 - (bottom - top)) / 2.0).max(0.0);
+            push_rect(
+                &mut path,
+                plot.x(bucket.start as f32)..plot.x(end as f32),
+                top - pad..bottom + pad,
+            );
+        }
+        path
+    }
 
-        let buckets = envelope(self.samples, MAX_POINTS);
-        let x_labels = buckets.iter().map(|b| self.x_label(b.start)).collect();
-        let mut upper = Series::new(
-            "upper".to_string(),
-            buckets.iter().map(|b| clip(b.max)).collect(),
-        );
-        let mut lower = Series::new(
-            "lower".to_string(),
-            buckets.iter().map(|b| clip(b.min)).collect(),
-        );
-        // Same palette slot: both envelope halves should look like one shape.
-        upper.index = Some(0);
-        lower.index = Some(0);
-
-        let mut chart = new_line_chart(
-            vec![upper, lower],
-            x_labels,
-            self.width,
-            self.height,
-            &self.title,
-        );
-        set_y_range(&mut chart, &y_range);
-        Ok(chart)
+    /// Samples per x-axis unit: per second with a sample rate, otherwise the
+    /// axis counts samples.
+    fn samples_per_unit(&self) -> f32 {
+        self.sample_rate.unwrap_or(1.0)
     }
 
     /// The fixed range, or the peak amplitude mirrored around zero.
@@ -176,16 +264,79 @@ impl<'a> Waveform<'a> {
         let y_max = if max_abs == 0.0 { 1.0 } else { max_abs };
         Ok(-y_max..y_max)
     }
+}
 
-    fn x_label(&self, sample_index: usize) -> String {
-        self.sample_rate.map_or_else(
-            || sample_index.to_string(),
-            |rate| format!("{:.2}s", sample_index as f32 / rate),
-        )
+/// Maps sample positions and amplitudes to pixels of the plot area, i.e.
+/// the image without title and axis labels.
+struct Plot {
+    left: f32,
+    top: f32,
+    width: f32,
+    height: f32,
+    /// Number of samples, spanning the full width.
+    len: usize,
+    y_range: Range<f32>,
+}
+
+impl Plot {
+    fn x(&self, sample_index: f32) -> f32 {
+        self.left + sample_index / self.len as f32 * self.width
+    }
+
+    /// Amplitudes outside the y-axis range are clipped to its bounds.
+    fn y(&self, amplitude: f32) -> f32 {
+        let Range { start, end } = self.y_range;
+        let clipped = amplitude.clamp(start, end);
+        self.top + (end - clipped) / (end - start) * self.height
+    }
+
+    fn bottom(&self) -> f32 {
+        self.top + self.height
     }
 }
 
-/// One chart point per bucket of consecutive samples.
+/// Ticks at round values, i.e. multiples of 1, 2 or 5 times a power of
+/// ten, using the smallest such step that splits `range` into at most
+/// `max_intervals` intervals. Returns the value and label of each tick.
+///
+/// Computed in f64: in f32, the step underflows to zero for amplitudes close
+/// to zero, and the span of a wide range overflows.
+fn ticks(range: &Range<f32>, max_intervals: f32, unit: &str) -> Vec<(f32, String)> {
+    let (start, end) = (f64::from(range.start), f64::from(range.end));
+    let raw_step = (end - start) / f64::from(max_intervals.max(1.0));
+    // An empty or infinite range has no meaningful ticks.
+    if !raw_step.is_finite() || raw_step <= 0.0 {
+        return Vec::new();
+    }
+    let exponent = raw_step.log10().floor() as i32;
+    let magnitude = 10_f64.powi(exponent);
+    let (step, exponent) = [1.0, 2.0, 5.0]
+        .into_iter()
+        .map(|m| m * magnitude)
+        .find(|step| *step >= raw_step)
+        .map_or((10.0 * magnitude, exponent + 1), |step| (step, exponent));
+    let decimals = (-exponent).max(0) as usize;
+    // The tolerance keeps a tick on a bound that is a multiple of the step
+    // except for rounding errors.
+    let first = (start / step - 1e-3).ceil() as i64;
+    let last = (end / step + 1e-3).floor() as i64;
+    (first..=last)
+        .map(|k| {
+            let value = k as f64 * step;
+            (value as f32, format!("{value:.decimals$}{unit}"))
+        })
+        .collect()
+}
+
+/// Appends a rectangle as closed subpath to SVG path data.
+fn push_rect(path: &mut String, x: Range<f32>, y: Range<f32>) {
+    path.push_str(&format!(
+        "M{:.1} {:.1}H{:.1}V{:.1}H{:.1}Z",
+        x.start, y.start, x.end, y.end, x.start
+    ));
+}
+
+/// One chart point or image column per bucket of consecutive samples.
 ///
 /// A bucket keeps only its minimum and maximum; everything between them is
 /// discarded. That is what makes the reduction lossy but peak-preserving.
@@ -196,16 +347,17 @@ pub(crate) struct Bucket {
     pub(crate) max: f32,
 }
 
-/// Reduces the samples to at most `max_points` min/max buckets.
+/// Reduces the samples to one min/max bucket per pixel column, or to one
+/// bucket per sample if there are fewer samples than columns.
 ///
 /// The bucket length follows from the input length, which is what a static
-/// image needs: the whole input is covered whatever its size.
-pub(crate) fn envelope(samples: &[f32], max_points: usize) -> Vec<Bucket> {
-    let bucket_len = samples.len().div_ceil(max_points);
-    samples
-        .chunks(bucket_len)
-        .enumerate()
-        .map(|(i, bucket)| bucket_of(i, bucket_len, bucket))
+/// image needs: the whole input is covered whatever its size. Bucket lengths
+/// differ by at most one sample, so that all columns have the same width.
+fn envelope(samples: &[f32], columns: usize) -> Vec<Bucket> {
+    let count = columns.min(samples.len());
+    let boundary = |i: usize| i * samples.len() / count;
+    (0..count)
+        .map(|i| bucket_of(boundary(i), &samples[boundary(i)..boundary(i + 1)]))
         .collect()
 }
 
@@ -221,19 +373,15 @@ pub(crate) fn envelope_exact(samples: &[f32], bucket_len: usize) -> Vec<Bucket> 
     samples
         .chunks_exact(bucket_len)
         .enumerate()
-        .map(|(i, bucket)| bucket_of(i, bucket_len, bucket))
+        .map(|(i, bucket)| bucket_of(i * bucket_len, bucket))
         .collect()
 }
 
-fn bucket_of(index: usize, bucket_len: usize, samples: &[f32]) -> Bucket {
+fn bucket_of(start: usize, samples: &[f32]) -> Bucket {
     let (min, max) = samples
         .iter()
         .fold((f32::MAX, f32::MIN), |(lo, hi), s| (lo.min(*s), hi.max(*s)));
-    Bucket {
-        start: index * bucket_len,
-        min,
-        max,
-    }
+    Bucket { start, min, max }
 }
 
 #[cfg(test)]
@@ -248,34 +396,59 @@ mod tests {
             .collect()
     }
 
-    fn y_axis_bounds(svg: &str) -> (f32, f32) {
-        let labels = numeric_labels(svg);
-        let min = labels.iter().copied().fold(f32::MAX, f32::min);
-        let max = labels.iter().copied().fold(f32::MIN, f32::max);
-        (min, max)
-    }
-
     #[test]
     fn auto_y_axis_is_symmetric_around_zero() {
-        let svg = Waveform::new(&full_scale_sine())
-            .sample_rate(44100.0)
-            .to_svg()
-            .unwrap();
-        assert_eq!(y_axis_bounds(&svg), (-1.0, 1.0));
+        let waveform = Waveform::new(&[0.0, 0.8, -0.3]);
+        assert_eq!(waveform.y_axis_range().unwrap(), -0.8..0.8);
     }
 
     #[test]
-    fn y_range_fixes_the_axis_exactly() {
-        // Both ranges clip the signal, so the data touches the bounds. The
-        // second one also has a positive lower bound. Labels have one
-        // decimal, so the bounds must be representable that way.
-        for range in [-0.5..0.5, 0.2..1.0] {
-            let svg = Waveform::new(&full_scale_sine())
-                .sample_rate(44100.0)
-                .y_range(range.clone())
-                .to_svg()
-                .unwrap();
-            assert_eq!(y_axis_bounds(&svg), (range.start, range.end));
+    fn y_axis_is_labeled_at_round_values() {
+        let svg = Waveform::new(&full_scale_sine())
+            .sample_rate(44100.0)
+            .y_range(-1.0..1.0)
+            .to_svg()
+            .unwrap();
+        assert_eq!(numeric_labels(&svg), [-1.0, -0.5, 0.0, 0.5, 1.0]);
+    }
+
+    #[test]
+    fn ticks_use_round_steps() {
+        let labels = |range, max_intervals| {
+            ticks(&range, max_intervals, "")
+                .into_iter()
+                .map(|(_, label)| label)
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(labels(-0.79..0.79, 6.0), ["-0.5", "0.0", "0.5"]);
+        assert_eq!(labels(0.2..1.0, 5.0), ["0.2", "0.4", "0.6", "0.8", "1.0"]);
+        assert_eq!(
+            labels(0.0..352_800.0, 8.0),
+            [
+                "0", "50000", "100000", "150000", "200000", "250000", "300000", "350000"
+            ]
+        );
+    }
+
+    #[test]
+    fn y_range_clips_amplitudes_to_the_plot() {
+        let plot = Plot {
+            left: 0.0,
+            top: 10.0,
+            width: 100.0,
+            height: 50.0,
+            len: 1,
+            y_range: -0.5..0.5,
+        };
+        assert_eq!(plot.y(1.0), 10.0);
+        assert_eq!(plot.y(0.0), 35.0);
+        assert_eq!(plot.y(-1.0), 60.0);
+    }
+
+    #[test]
+    fn renders_extreme_amplitudes() {
+        for amplitude in [1e-44, f32::MAX] {
+            assert!(Waveform::new(&[amplitude, -amplitude]).to_svg().is_ok());
         }
     }
 
@@ -298,6 +471,17 @@ mod tests {
         assert_eq!(buckets.len(), 10);
         assert_eq!(buckets[5].min, -0.9);
         assert_eq!(buckets[5].max, 0.9);
+    }
+
+    #[test]
+    fn envelope_covers_all_samples() {
+        let samples: Vec<f32> = (0..10).map(|i| i as f32).collect();
+        let buckets = envelope(&samples, 4);
+        let starts: Vec<_> = buckets.iter().map(|b| b.start).collect();
+        assert_eq!(starts, [0, 2, 5, 7]);
+        assert_eq!(buckets[3].max, 9.0);
+        // Fewer samples than columns: one bucket per sample.
+        assert_eq!(envelope(&samples, 100).len(), 10);
     }
 
     #[test]
