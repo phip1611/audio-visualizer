@@ -6,6 +6,8 @@
   Audacity: each pixel column is a filled bar from the smallest to the
   largest sample instead of two separate min/max lines, and the axes are
   labeled at round values
+- `WaveformVisualizer` rejects a sample rate that is zero, negative, NaN or
+  infinite
 
 ## v0.7.0 (2026-09-15)
 

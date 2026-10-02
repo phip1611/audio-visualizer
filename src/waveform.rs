@@ -136,7 +136,7 @@ impl<'a> Waveform<'a> {
     /// Renders the waveform to an SVG string.
     pub fn to_svg(&self) -> Result<String, Error> {
         ensure_finite_and_non_empty(self.samples.iter().copied())?;
-        let samples_per_unit = self.samples_per_unit();
+        let samples_per_unit = self.samples_per_unit()?;
         let y_range = self.y_axis_range()?;
 
         let top = if self.title.is_empty() { 12.0 } else { 40.0 };
@@ -250,8 +250,14 @@ impl<'a> Waveform<'a> {
 
     /// Samples per x-axis unit: per second with a sample rate, otherwise the
     /// axis counts samples.
-    fn samples_per_unit(&self) -> f32 {
-        self.sample_rate.unwrap_or(1.0)
+    fn samples_per_unit(&self) -> Result<f32, Error> {
+        match self.sample_rate {
+            None => Ok(1.0),
+            Some(rate) if rate.is_finite() && rate > 0.0 => Ok(rate),
+            Some(rate) => Err(Error::InvalidData(format!(
+                "sample rate {rate} must be finite and positive"
+            ))),
+        }
     }
 
     /// The fixed range, or the peak amplitude mirrored around zero.
@@ -450,6 +456,16 @@ mod tests {
         assert_eq!(plot.y(1.0), 10.0);
         assert_eq!(plot.y(0.0), 35.0);
         assert_eq!(plot.y(-1.0), 60.0);
+    }
+
+    #[test]
+    fn rejects_invalid_sample_rate() {
+        for rate in [0.0, -44100.0, f32::NAN, f32::INFINITY] {
+            assert!(matches!(
+                Waveform::new(&[0.0]).sample_rate(rate).to_svg(),
+                Err(Error::InvalidData(_))
+            ));
+        }
     }
 
     #[test]
