@@ -6,6 +6,8 @@
   Audacity: each pixel column is a filled bar from the smallest to the
   largest sample instead of two separate min/max lines, and the axes are
   labeled at round values
+- `WaveformVisualizer` shows the RMS (loudness) as a lighter area inside the
+  peak amplitude
 - `WaveformVisualizer` rejects a sample rate that is zero, negative, NaN or
   infinite
 

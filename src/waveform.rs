@@ -33,6 +33,7 @@ use std::path::Path;
 // Colors and font sizes of the charts-rs light theme, so that waveform and
 // spectrum images look alike.
 const PEAK_COLOR: &str = "#5470c6";
+const RMS_COLOR: &str = "#98a9dd";
 const GRID_COLOR: &str = "#e0e6f2";
 const AXIS_COLOR: &str = "#6e7079";
 const TITLE_COLOR: &str = "#464646";
@@ -58,7 +59,8 @@ const MIN_Y_TICK_SPACING: f32 = 50.0;
 /// is dozens of samples per pixel column already. A column therefore is a
 /// filled bar from the smallest to the largest sample it covers, as in audio
 /// editors such as Audacity - the shape is the peak amplitude over time, and
-/// the oscillation within a column is deliberately not resolved.
+/// the oscillation within a column is deliberately not resolved. A lighter
+/// bar inside shows the RMS of the column, i.e. how loud it is.
 ///
 /// Drawing a line through every n-th sample instead would undersample the
 /// signal by orders of magnitude: peaks between two picked samples vanish,
@@ -184,10 +186,9 @@ impl<'a> Waveform<'a> {
                 r#"<line x1="{left}" x2="{right}" y1="{y}" y2="{y}" stroke="{GRID_COLOR}"/>"#
             ));
         }
-        svg.push_str(&format!(
-            r#"<path d="{}" fill="{PEAK_COLOR}"/>"#,
-            self.peak_path(&plot)
-        ));
+        let (peak_path, rms_path) = self.column_paths(&plot);
+        svg.push_str(&format!(r#"<path d="{peak_path}" fill="{PEAK_COLOR}"/>"#));
+        svg.push_str(&format!(r#"<path d="{rms_path}" fill="{RMS_COLOR}"/>"#));
         svg.push_str(&format!(
             r#"<line x1="{left}" x2="{right}" y1="{bottom}" y2="{bottom}" stroke="{AXIS_COLOR}"/>"#
         ));
@@ -224,10 +225,11 @@ impl<'a> Waveform<'a> {
     }
 
     /// One filled column per pixel from the smallest to the largest sample
-    /// it covers, as a single SVG path.
-    fn peak_path(&self, plot: &Plot) -> String {
+    /// it covers, and a lighter one inside for the RMS (the loudness), each
+    /// as a single SVG path.
+    fn column_paths(&self, plot: &Plot) -> (String, String) {
         let buckets = envelope(self.samples, plot.width as usize);
-        let mut path = String::new();
+        let (mut peak_path, mut rms_path) = (String::new(), String::new());
         for (i, bucket) in buckets.iter().enumerate() {
             let end = buckets.get(i + 1).map_or(self.samples.len(), |b| b.start);
             // The column also covers the step to the next column's first
@@ -239,13 +241,20 @@ impl<'a> Waveform<'a> {
             let (top, bottom) = (plot.y(max), plot.y(min));
             // At least one pixel high, so that silence remains visible.
             let pad = ((1.0 - (bottom - top)) / 2.0).max(0.0);
-            push_rect(
-                &mut path,
-                plot.x(bucket.start as f32)..plot.x(end as f32),
-                top - pad..bottom + pad,
-            );
+            let x = plot.x(bucket.start as f32)..plot.x(end as f32);
+            push_rect(&mut peak_path, x.clone(), top - pad..bottom + pad);
+
+            // A column that does not cross zero shows a part of a single
+            // slope rather than a level around zero.
+            if bucket.min < 0.0 && bucket.max > 0.0 {
+                // Kept inside the peak bar, which it exceeds for samples
+                // that are not centered around zero.
+                let rms_top = plot.y(bucket.rms.min(bucket.max));
+                let rms_bottom = plot.y((-bucket.rms).max(bucket.min));
+                push_rect(&mut rms_path, x, rms_top..rms_bottom);
+            }
         }
-        path
+        (peak_path, rms_path)
     }
 
     /// Samples per x-axis unit: per second with a sample rate, otherwise the
@@ -351,13 +360,14 @@ fn escape_xml(text: &str) -> String {
 
 /// One chart point or image column per bucket of consecutive samples.
 ///
-/// A bucket keeps only its minimum and maximum; everything between them is
+/// A bucket keeps only its minimum, maximum and RMS; everything else is
 /// discarded. That is what makes the reduction lossy but peak-preserving.
 pub(crate) struct Bucket {
     /// Index of the bucket's first sample, used for the x-axis position.
     pub(crate) start: usize,
     pub(crate) min: f32,
     pub(crate) max: f32,
+    pub(crate) rms: f32,
 }
 
 /// Reduces the samples to one min/max bucket per pixel column, or to one
@@ -391,10 +401,17 @@ pub(crate) fn envelope_exact(samples: &[f32], bucket_len: usize) -> Vec<Bucket> 
 }
 
 fn bucket_of(start: usize, samples: &[f32]) -> Bucket {
-    let (min, max) = samples
+    let (min, max, sum_of_squares) = samples
         .iter()
-        .fold((f32::MAX, f32::MIN), |(lo, hi), s| (lo.min(*s), hi.max(*s)));
-    Bucket { start, min, max }
+        .fold((f32::MAX, f32::MIN, 0.0), |(lo, hi, sq), s| {
+            (lo.min(*s), hi.max(*s), sq + s * s)
+        });
+    Bucket {
+        start,
+        min,
+        max,
+        rms: (sum_of_squares / samples.len() as f32).sqrt(),
+    }
 }
 
 #[cfg(test)]
@@ -500,6 +517,27 @@ mod tests {
         assert_eq!(buckets.len(), 10);
         assert_eq!(buckets[5].min, -0.9);
         assert_eq!(buckets[5].max, 0.9);
+    }
+
+    #[test]
+    fn rms_only_in_columns_crossing_zero() {
+        let plot = Plot {
+            left: 0.0,
+            top: 0.0,
+            width: 2.0,
+            height: 100.0,
+            len: 4,
+            y_range: -1.0..1.0,
+        };
+        let (_, rms_path) = Waveform::new(&[0.2, 0.4, -0.5, 0.5]).column_paths(&plot);
+        assert_eq!(rms_path.matches('M').count(), 1);
+    }
+
+    #[test]
+    fn bucket_has_rms() {
+        let bucket = bucket_of(0, &[0.5, -0.5, 0.5, -0.5]);
+        assert_eq!(bucket.rms, 0.5);
+        assert_eq!(bucket_of(0, &[0.0; 4]).rms, 0.0);
     }
 
     #[test]
