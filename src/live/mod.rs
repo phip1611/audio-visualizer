@@ -216,6 +216,7 @@ impl<'a> LiveVisualizer<'a> {
             x_label: self.x_label,
             y_label: self.y_label,
         };
+        #[allow(clippy::tuple_array_conversions)]
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_inner_size([self.window_size.0, self.window_size.1]),

@@ -130,7 +130,7 @@ impl<'a> Spectrum<'a> {
     /// Renders the spectrum and writes it as PNG file, creating missing
     /// parent directories.
     pub fn write_png(&self, path: impl AsRef<Path>) -> Result<(), Error> {
-        write_png(&self.chart()?, path.as_ref())
+        write_png(&self.to_svg()?, path.as_ref())
     }
 
     fn chart(&self) -> Result<LineChart, Error> {

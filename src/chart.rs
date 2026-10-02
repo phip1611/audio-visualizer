@@ -49,10 +49,10 @@ pub(crate) fn new_line_chart(
     chart
 }
 
-/// Renders the chart as PNG and writes it to `path`, creating missing parent
+/// Renders the SVG as PNG and writes it to `path`, creating missing parent
 /// directories.
-pub(crate) fn write_png(chart: &LineChart, path: &Path) -> Result<(), Error> {
-    let png = svg_to_png(&chart.svg()?)?;
+pub(crate) fn write_png(svg: &str, path: &Path) -> Result<(), Error> {
+    let png = svg_to_png(svg)?;
     if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
         fs::create_dir_all(parent)?;
     }
