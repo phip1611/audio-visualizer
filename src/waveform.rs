@@ -172,7 +172,7 @@ impl<'a> Waveform<'a> {
             svg.push_str(&format!(
                 r#"<text x="{}" y="26" text-anchor="middle" font-size="{TITLE_FONT_SIZE}" fill="{TITLE_COLOR}">{}</text>"#,
                 width as f32 / 2.0,
-                self.title,
+                escape_xml(&self.title),
             ));
         }
         // Grid, waveform and axis are aligned to pixels; anti-aliasing
@@ -336,6 +336,13 @@ fn push_rect(path: &mut String, x: Range<f32>, y: Range<f32>) {
     ));
 }
 
+/// Escapes text for use as content of an SVG element.
+fn escape_xml(text: &str) -> String {
+    text.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+
 /// One chart point or image column per bucket of consecutive samples.
 ///
 /// A bucket keeps only its minimum and maximum; everything between them is
@@ -450,6 +457,12 @@ mod tests {
         for amplitude in [1e-44, f32::MAX] {
             assert!(Waveform::new(&[amplitude, -amplitude]).to_svg().is_ok());
         }
+    }
+
+    #[test]
+    fn escapes_the_title() {
+        let svg = Waveform::new(&[0.0]).title("L&R <mix>").to_svg().unwrap();
+        assert!(svg.contains(">L&amp;R &lt;mix&gt;</text>"));
     }
 
     #[test]
