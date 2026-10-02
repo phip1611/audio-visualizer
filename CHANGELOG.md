@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.8.0 (2026-10-02)
+
 - `WaveformVisualizer` looks like a waveform in an audio editor such as
   Audacity: each pixel column is a filled bar from the smallest to the
   largest sample instead of two separate min/max lines, and the axes are
