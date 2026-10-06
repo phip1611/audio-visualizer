@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 use audio_visualizer::live::{LiveVisualizer, Transform};
-use lowpass_filter::lowpass_filter_slice;
+use lowpass_filter::LowpassFilter;
 
 mod common;
 
@@ -32,7 +32,7 @@ fn main() {
     let input = common::select_input();
     LiveVisualizer::new(Transform::waveform(|samples, sample_rate| {
         let mut samples = samples.to_vec();
-        lowpass_filter_slice(&mut samples, sample_rate, 80.0);
+        LowpassFilter::new(sample_rate, 80.0).run_slice(&mut samples);
         samples
     }))
     .title("Live Audio Lowpass Filter View")
