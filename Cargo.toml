@@ -37,7 +37,7 @@ egui_plot = "0.37"
 ringbuffer = "0.16"
 
 [dev-dependencies]
-lowpass-filter = "0.5"
+lowpass-filter = "0.6"
 spectrum-analyzer = "2.0"
 symphonia = { version = "0.6", default-features = false, features = ["mp3"] }
 
