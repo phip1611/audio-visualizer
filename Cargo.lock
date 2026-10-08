@@ -343,9 +343,9 @@ dependencies = [
 
 [[package]]
 name = "charts-rs"
-version = "1.2.0"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80006bd07d061e332042e451c1a63427facd2882bf602e4df643b21b898a01a7"
+checksum = "5ff907cd44c3c35af1cf3085bbc700163e1797aaddd10817e974e48beccf3a90"
 dependencies = [
  "arc-swap",
  "fontdue",
