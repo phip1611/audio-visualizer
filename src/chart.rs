@@ -42,10 +42,10 @@ pub(crate) fn new_line_chart(
     let mut chart = LineChart::new(series_list, x_labels);
     chart.width = width as f32;
     chart.height = height as f32;
-    chart.title_text = title.to_string();
-    chart.legend_show = Some(false);
-    chart.series_symbol = None;
-    chart.x_boundary_gap = Some(false);
+    chart.title.text = title.to_string();
+    chart.legend.show = Some(false);
+    chart.series.symbol = None;
+    chart.x_axis.boundary_gap = Some(false);
     chart
 }
 
@@ -111,8 +111,8 @@ pub(crate) fn set_y_range(chart: &mut LineChart, range: &Range<f32>) {
     } else {
         range.start
     };
-    chart.y_axis_configs[0].axis_min = Some(min);
-    chart.y_axis_configs[0].axis_max = Some(range.end.next_up());
+    chart.y_axis_configs[0].min = Some(min);
+    chart.y_axis_configs[0].max = Some(range.end.next_up());
 }
 
 /// All `<text>` contents of `svg` that parse as numbers. These are the

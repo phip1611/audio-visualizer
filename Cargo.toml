@@ -23,7 +23,7 @@ exclude = [
 
 [dependencies]
 # static chart rendering (PNG/SVG)
-charts-rs = { version = "1.0", features = ["png"] }
+charts-rs = { version = "2.0", features = ["png"] }
 # live visualization: audio recording + GUI window with plots
 cpal = "0.18"
 # Only the features the live window needs: no X11 (Wayland only), no
