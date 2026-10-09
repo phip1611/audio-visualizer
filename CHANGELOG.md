@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- **BREAKING**: `Error::Chart` wraps the error type of `charts-rs` 2.0
+  instead of 1.x; the rendered PNG and SVG output is unchanged
+
 ## v0.8.0 (2026-10-02)
 
 - `WaveformVisualizer` looks like a waveform in an audio editor such as

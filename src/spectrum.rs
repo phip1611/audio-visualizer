@@ -157,7 +157,7 @@ impl<'a> Spectrum<'a> {
         }
 
         let mut chart = new_line_chart(series_list, x_labels, self.width, self.height, &self.title);
-        chart.series_colors[1] = (255, 0, 0).into();
+        chart.series.colors[1] = (255, 0, 0).into();
         set_y_range(&mut chart, &y_range);
         Ok(chart)
     }
