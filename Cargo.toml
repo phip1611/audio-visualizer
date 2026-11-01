@@ -33,7 +33,7 @@ eframe = { version = "0.36", default-features = false, features = [
     "wayland",
     "wgpu",
 ] }
-egui_plot = "0.37"
+egui_plot = "0.38"
 ringbuffer = "0.16"
 
 [dev-dependencies]
